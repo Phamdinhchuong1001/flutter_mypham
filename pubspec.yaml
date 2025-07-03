@@ -1,0 +1,42 @@
+name: flutter_appmypham
+description: "A new Flutter project."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^0.13.6 
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.5
+  video_player: ^2.7.0
+  flutter_svg: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/cocoon_logo.gif
+    - assets/video/videococoon.mp4
+    - assets/images/duongtoctinhdaubuoi.jpg
+    - assets/images/gelruamat.jpg
+    - assets/images/taytebaochet.jpg
+    - assets/images/kemthoatay.jpg
+    - assets/images/duongtoc.jpg
+    - assets/images/orgin1.png
+    - assets/images/orgin2.png
+    - assets/images/orgin3.png
+    - assets/images/orgin4.png
+    - assets/images/profile.jpg
+    # Nếu bạn định dùng ảnh tĩnh PNG thay vì GIF, khai báo thêm:
+    
