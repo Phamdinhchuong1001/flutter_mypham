@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_appmypham/services/api_service.dart'; // Đổi đường dẫn nếu cần
+import 'package:flutter_appmypham/services/api_service.dart'; // ✅ Gọi API
+import 'package:flutter_appmypham/services/user_storage.dart'; // ✅ Lưu user vào local
 import 'home_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -20,13 +21,13 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
+  // ✅ Hàm xử lý đăng ký
   void _register() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
       final name = email.split('@')[0];
 
-      // Hiển thị loading
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -34,19 +35,34 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       final error = await ApiService.register(name, email, password);
-      Navigator.pop(context); // đóng loading
+
+      if (!mounted) return;
+      Navigator.pop(context); // ❌ Đóng loading
 
       if (error == null) {
-        // Thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Đăng ký thành công')),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+        // ✅ Đăng ký xong thì đăng nhập để lấy dữ liệu
+        final loginResult = await ApiService.login(email, password);
+
+        if (loginResult['success'] == true && loginResult['data'] != null) {
+          await UserStorage.saveUserData(loginResult['data']);
+
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('✅ Đăng ký thành công')),
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loginResult['message'] ?? 'Không thể đăng nhập sau khi đăng ký'),
+            ),
+          );
+        }
       } else {
-        // Thất bại
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('❌ $error')),
         );
@@ -87,6 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // 🧱 Form đăng ký
   Widget _buildFormContent() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -104,6 +121,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
               ),
               const SizedBox(height: 32),
+
+              // 🟡 Email
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -117,6 +136,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 decoration: _inputDecoration("Email", Icons.email),
               ),
               const SizedBox(height: 16),
+
+              // 🟡 Mật khẩu
               TextFormField(
                 controller: _passwordController,
                 obscureText: !_isPasswordVisible,
@@ -141,6 +162,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // 🟡 Xác nhận mật khẩu
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: !_isConfirmPasswordVisible,
@@ -166,6 +189,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // 🔵 Nút đăng ký
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -181,6 +206,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // 🔁 Chuyển sang đăng nhập
               TextButton(
                 onPressed: widget.onTap,
                 child: Text.rich(

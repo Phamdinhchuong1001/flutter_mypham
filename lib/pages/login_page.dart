@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import 'package:flutter_appmypham/services/api_service.dart'; // Đổi đường dẫn nếu cần
+import 'package:flutter_appmypham/services/api_service.dart'; // API service
+import 'package:flutter_appmypham/services/user_storage.dart'; // Để lưu dữ liệu user
 
 class LoginPage extends StatelessWidget {
   final void Function()? onTap;
@@ -82,6 +83,7 @@ class _FormContentState extends State<_FormContent> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  // ✅ Hàm xử lý đăng nhập
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -94,19 +96,22 @@ class _FormContentState extends State<_FormContent> {
 
     setState(() => _isLoading = false);
 
-    if (result['success']) {
+    if (result['success'] == true && result['data'] != null) {
+      // ✅ Lưu thông tin người dùng vào SharedPreferences
+      await UserStorage.saveUserData(result['data']);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Đăng nhập thành công")),
       );
 
-      // Chuyển đến trang chính
+      // ✅ Điều hướng đến HomePage
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'])),
+        SnackBar(content: Text(result['message'] ?? 'Đăng nhập thất bại')),
       );
     }
   }
@@ -125,14 +130,14 @@ class _FormContentState extends State<_FormContent> {
           ),
           const SizedBox(height: 32),
 
+          // 🟢 Ô nhập Email
           TextFormField(
             controller: emailController,
             decoration: InputDecoration(
               hintText: 'Email',
               filled: true,
               fillColor: const Color(0xFFF5FCF9),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(50)),
                 borderSide: BorderSide.none,
@@ -141,14 +146,14 @@ class _FormContentState extends State<_FormContent> {
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.isEmpty) return 'Vui lòng nhập email';
-              final emailRegex =
-                  RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$');
+              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}$');
               if (!emailRegex.hasMatch(value)) return 'Email không hợp lệ';
               return null;
             },
           ),
           const SizedBox(height: 16),
 
+          // 🟢 Ô nhập Mật khẩu
           TextFormField(
             controller: passwordController,
             obscureText: !_isPasswordVisible,
@@ -156,8 +161,7 @@ class _FormContentState extends State<_FormContent> {
               hintText: 'Mật khẩu',
               filled: true,
               fillColor: const Color(0xFFF5FCF9),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(50)),
                 borderSide: BorderSide.none,
@@ -186,6 +190,7 @@ class _FormContentState extends State<_FormContent> {
 
           const SizedBox(height: 24),
 
+          // 🟢 Nút đăng nhập
           SizedBox(
             width: double.infinity,
             child: _isLoading
@@ -204,16 +209,18 @@ class _FormContentState extends State<_FormContent> {
           ),
           const SizedBox(height: 16),
 
+          // 🔸 Text "Quên mật khẩu"
           TextButton(
             onPressed: () {},
             child: Text(
               'Quên mật khẩu?',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Color.fromRGBO(0, 0, 0, 0.64),
+                    color: const Color.fromRGBO(0, 0, 0, 0.64),
                   ),
             ),
           ),
 
+          // 🔸 Text chuyển sang đăng ký
           TextButton(
             onPressed: widget.onTap,
             child: Text.rich(
@@ -227,7 +234,7 @@ class _FormContentState extends State<_FormContent> {
                 ],
               ),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Color.fromRGBO(0, 0, 0, 0.64),
+                    color: const Color.fromRGBO(0, 0, 0, 0.64),
                   ),
             ),
           ),

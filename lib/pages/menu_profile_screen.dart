@@ -1,37 +1,104 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_appmypham/pages/login_page.dart';
-import 'profile_screen.dart';
-import 'edit_profile_screen.dart';
-import 'favorite_screen.dart';
-// ignore: duplicate_import
-import 'login_page.dart'; 
-// ✅ Nhớ import màn hình bạn muốn chuyển tới
+import 'package:flutter_appmypham/pages/profile_screen.dart';
+import 'package:flutter_appmypham/pages/edit_profile_screen.dart';
+import 'package:flutter_appmypham/pages/favorite_screen.dart';
+import 'package:flutter_appmypham/services/api_service.dart';
+import 'package:flutter_appmypham/services/user_storage.dart';
 
-class MenuProfileScreen extends StatelessWidget {
+class MenuProfileScreen extends StatefulWidget {
   const MenuProfileScreen({super.key});
+
+  @override
+  State<MenuProfileScreen> createState() => _MenuProfileScreenState();
+}
+
+class _MenuProfileScreenState extends State<MenuProfileScreen> {
+  String avatar = '';
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvatar();
+  }
+
+  Future<void> _loadAvatar() async {
+    final user = await UserStorage.getUserData();
+    if (user != null) {
+      setState(() {
+        avatar = user['avatar'] ?? '';
+        userId = user['id'] ?? 0;
+      });
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final user = await UserStorage.getUserData();
+    if (user == null || user['id'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng đăng nhập lại")),
+      );
+      return;
+    }
+
+    final int id = user['id'];
+    dynamic file;
+
+    if (!kIsWeb) {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+      file = File(picked.path);
+    }
+
+    final uploadedPath = await ApiService.uploadAvatarAuto(id, file);
+    if (uploadedPath != null) {
+      await UserStorage.saveUserData({
+        'id': id,
+        'name': user['name'] ?? '',
+        'email': user['email'] ?? '',
+        'phone': user['phone'] ?? '',
+        'location': user['location'] ?? '',
+        'avatar': uploadedPath,
+      });
+
+      setState(() {
+        avatar = uploadedPath;
+        userId = id;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Cập nhật ảnh đại diện thành công")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Lỗi khi upload ảnh đại diện")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
-      // 🔶 AppBar đơn giản với màu trắng và chữ đen
       appBar: AppBar(
-        backgroundColor: Colors.orange, // ✅ nền AppBar trắng
-        foregroundColor: Colors.white, // ✅ màu chữ đen
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         title: const Text("Cài Đặt"),
         leading: const BackButton(),
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Column(
           children: [
-            const ProfilePic(),
+            ProfilePic(imageUrl: avatar, onUpload: _pickAndUploadImage),
             const SizedBox(height: 20),
 
-            // 🔶 "My Account" có xử lý chuyển trang
             CustomProfileMenu(
               text: "Thông tin cá nhân",
               iconData: Icons.person,
@@ -43,7 +110,7 @@ class MenuProfileScreen extends StatelessWidget {
               },
             ),
 
-             CustomProfileMenu(
+            CustomProfileMenu(
               text: "Sản phẩm yêu thích",
               iconData: Icons.favorite,
               press: () {
@@ -57,36 +124,42 @@ class MenuProfileScreen extends StatelessWidget {
             CustomProfileMenu(
               text: "Cài đặt",
               iconData: Icons.settings,
-              press: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditProfileScreen(
-                      name: "Nguyễn Văn A",
-                      email: "nguyenvana@example.com",
-                      phone: "0123456789",
-                      location: "Hồ Chí Minh",
+              press: () async {
+                final user = await UserStorage.getUserData();
+                if (user != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProfileScreen(
+                        name: user['name'] ?? '',
+                        email: user['email'] ?? '',
+                        phone: user['phone'] ?? '',
+                        location: user['location'] ?? '',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Không tìm thấy thông tin người dùng")),
+                  );
+                }
               },
             ),
 
             CustomProfileMenu(
               text: "Help Center",
               iconData: Icons.help_outline,
-              press: () {}, // ✅ Bổ sung để tránh thiếu press
+              press: () {},
             ),
 
             CustomProfileMenu(
               text: "Đăng xuất",
               iconData: Icons.logout,
               press: () {
-                Navigator.push(
+                UserStorage.clearUserData();
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) =>  LoginPage(
-                     onTap: () {},
-                  )),
+                  MaterialPageRoute(builder: (context) => LoginPage(onTap: () {})),
                 );
               },
             ),
@@ -97,12 +170,23 @@ class MenuProfileScreen extends StatelessWidget {
   }
 }
 
-// 🔵 Widget hiển thị ảnh đại diện tròn với nút đổi ảnh
 class ProfilePic extends StatelessWidget {
-  const ProfilePic({super.key});
+  final String imageUrl;
+  final VoidCallback onUpload;
+
+  const ProfilePic({
+    super.key,
+    required this.imageUrl,
+    required this.onUpload,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('/uploads');
+    final imageWidget = isNetworkImage
+        ? NetworkImage(imageUrl.startsWith('/') ? 'http://127.0.0.1:3000$imageUrl' : imageUrl)
+        : const AssetImage('assets/images/profile.jpg') as ImageProvider;
+
     return SizedBox(
       height: 115,
       width: 115,
@@ -110,9 +194,12 @@ class ProfilePic extends StatelessWidget {
         fit: StackFit.expand,
         clipBehavior: Clip.none,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             backgroundColor: Colors.grey,
-            child: Icon(Icons.person, size: 60, color: Colors.white), // Icon nếu không có ảnh
+            backgroundImage: imageUrl.isNotEmpty ? imageWidget : null,
+            child: imageUrl.isEmpty
+                ? const Icon(Icons.person, size: 60, color: Colors.white)
+                : null,
           ),
           Positioned(
             right: -10,
@@ -125,11 +212,9 @@ class ProfilePic extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   foregroundColor: Colors.white,
                   shape: const CircleBorder(),
-                  backgroundColor: Color(0xFFF5F6F9),
+                  backgroundColor: const Color(0xFFF5F6F9),
                 ),
-                onPressed: () {
-                  // 🔸 Bạn có thể thêm xử lý đổi ảnh tại đây
-                },
+                onPressed: onUpload,
                 child: const Icon(Icons.camera_alt, color: Color(0xFF757575), size: 20),
               ),
             ),
@@ -140,7 +225,6 @@ class ProfilePic extends StatelessWidget {
   }
 }
 
-// 🔵 Widget hiển thị 1 dòng menu trong danh sách
 class CustomProfileMenu extends StatelessWidget {
   const CustomProfileMenu({
     super.key,
@@ -164,7 +248,7 @@ class CustomProfileMenu extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           backgroundColor: const Color(0xFFF5F6F9),
         ),
-        onPressed: press ?? () {}, // nếu không có xử lý thì mặc định là không làm gì
+        onPressed: press ?? () {},
         child: Row(
           children: [
             Icon(iconData, color: const Color(0xFFFF7643), size: 22),
