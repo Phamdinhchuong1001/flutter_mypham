@@ -82,4 +82,9 @@ class AdminAuthService {
     currentUsername = prefs.getString('admin_username');
     return token != null;
   }
+  /// Lấy tên đăng nhập hiện tại
+Future<String?> get currentUser async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString('admin_username');
+}
 }

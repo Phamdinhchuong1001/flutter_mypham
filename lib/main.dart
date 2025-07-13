@@ -1,5 +1,6 @@
 // Nhập các gói thư viện cần thiết từ Flutter và các package bên ngoài
 import 'package:flutter/material.dart'; // Thư viện giao diện Flutter
+import 'package:flutter_appmypham/screens/admin_dashboard.dart';
 import 'package:provider/provider.dart'; // Thư viện quản lý trạng thái Provider
 import 'package:flutter_appmypham/auth/login_or_register.dart'; // Import màn hình LoginOrRegister
 import 'package:flutter_appmypham/themes/theme_provider.dart'; // Import class ThemeProvider để xử lý giao diện tối/sáng
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false, // Ẩn banner "debug" ở góc phải trên màn hình
-      home: const LoginOrRegister(), // Màn hình đầu tiên khi mở app (login hoặc đăng ký)
+      home: const AdminDashboard(), // Màn hình đầu tiên khi mở app (login hoặc đăng ký)
       
       // Lấy theme hiện tại từ ThemeProvider để áp dụng cho toàn ứng dụng
       theme: Provider.of<ThemeProvider>(context).themeData,
