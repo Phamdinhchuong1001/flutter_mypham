@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
-const mysql = require('mysql2');
 const multer = require('multer');
 const path = require('path');
 
@@ -10,20 +9,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Kết nối MySQL
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '', // thêm nếu bạn có
-  database: 'mypham'
-});
+// 🧩 Import các module
+const db = require('./db'); // Kết nối MySQL đã chuẩn hóa
+const adminRoutes = require('./routes/admin'); // Router admin
 
-db.connect(err => {
-  if (err) console.error('❌ Kết nối MySQL thất bại:', err);
-  else console.log('✅ Kết nối MySQL thành công');
-});
+// 📂 Cho phép truy cập ảnh avatar
+app.use('/uploads', express.static('uploads'));
 
-// ⚙️ Cấu hình lưu file upload (avatar)
+// ⚙️ Cấu hình lưu ảnh avatar người dùng
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -34,9 +27,8 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-app.use('/uploads', express.static('uploads')); // truy cập ảnh
 
-// 📌 Đăng ký
+// 📌 API: Đăng ký
 app.post('/api/register', (req, res) => {
   const { name, email, password } = req.body;
   const hashed = bcrypt.hashSync(password, 8);
@@ -50,7 +42,7 @@ app.post('/api/register', (req, res) => {
   );
 });
 
-// 🔐 Đăng nhập
+// 🔐 API: Đăng nhập
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
   db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
@@ -75,7 +67,7 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// 📝 Cập nhật thông tin người dùng
+// ✏️ API: Cập nhật thông tin người dùng
 app.put('/api/users/:id', (req, res) => {
   const userId = req.params.id;
   const { name, email, phone, location, oldPassword, newPassword } = req.body;
@@ -112,7 +104,7 @@ app.put('/api/users/:id', (req, res) => {
   });
 });
 
-// 🖼️ API cập nhật avatar
+// 🖼️ API: Cập nhật avatar
 app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   const userId = req.params.id;
   const fileName = req.file.filename;
@@ -124,5 +116,10 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   });
 });
 
-// Khởi động server
-app.listen(3000, () => console.log('🚀 Server chạy tại http://localhost:3000'));
+// 🛠️ Tích hợp router admin
+app.use('/api/admin', adminRoutes);
+
+// 🚀 Khởi động server
+app.listen(3000, () => {
+  console.log('🚀 Server chạy tại http://localhost:3000');
+});
