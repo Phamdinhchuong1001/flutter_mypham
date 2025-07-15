@@ -50,44 +50,43 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<void> fetchDashboardData() async {
-    try {
-      // Fetch users count
-      totalUsers = await _userService.getTotalUsersCount();
+  try {
+    //  Gọi API và cập nhật UI
+    final userCount = await _userService.getTotalUsersCount();
+    setState(() {
+      totalUsers = userCount;
+    });
 
-      // Fetch order analytics
-      final orderAnalytics = await _orderService.getOrderAnalytics();
-      setState(() {
-        totalOrders = orderAnalytics['totalOrders'] ?? 0;
-        totalRevenue = orderAnalytics['totalRevenue'] ?? 0.0;
-      });
+    //  Các đoạn sau giữ nguyên
+    final orderAnalytics = await _orderService.getOrderAnalytics();
+    setState(() {
+      totalOrders = orderAnalytics['totalOrders'] ?? 0;
+      totalRevenue = orderAnalytics['totalRevenue'] ?? 0.0;
+    });
 
-      // Fetch top selling products
-      final topProductsData = await _productService.getTopSellingProducts();
+    final topProductsData = await _productService.getTopSellingProducts();
+    final orderAnalyticsProductSales = orderAnalytics['productSales'] ?? {};
+    setState(() {
+      topProducts = topProductsData
+          .map((product) => {
+                ...product.toJson(),
+                'salesCount': orderAnalyticsProductSales[product.id] ?? 0
+              })
+          .toList();
+    });
 
-      // Enrich top products with sales count
-      final orderAnalyticsProductSales = orderAnalytics['productSales'] ?? {};
-      setState(() {
-        topProducts = topProductsData
-            .map((product) => {
-          ...product.toJson(),
-          'salesCount':
-          orderAnalyticsProductSales[product.id] ?? 0
-        })
-            .toList();
-      });
-
-      // Fetch recent orders
-      final recentOrdersData = await _orderService.getRecentOrders();
-      setState(() {
-        recentOrders = recentOrdersData.map((order) => order).toList();
-      });
-    } catch (e) {
-      print('Lỗi khi tải dữ liệu bảng điều khiển: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể tải dữ liệu: $e')),
-      );
-    }
+    final recentOrdersData = await _orderService.getRecentOrders();
+    setState(() {
+      recentOrders = recentOrdersData.map((order) => order).toList();
+    });
+  } catch (e) {
+    print('Lỗi khi tải dữ liệu bảng điều khiển: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Không thể tải dữ liệu: $e')),
+    );
   }
+}
+
 
   void _handleLogout() async {
     await _authService.logout();
@@ -163,10 +162,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       backgroundColor: mainColor,
       title: Row(
         children: [
-          Icon(Icons.restaurant_menu, size: 28, color: Colors.white),
+          Icon(Icons.spa, size: 28, color: Colors.white),
           SizedBox(width: 12),
           Text(
-            'Crunch n Dash',
+            'COCOON',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 22,
@@ -236,7 +235,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => AdminOrderScreen()));
                 }),
-                _buildNavItem(Icons.fastfood_rounded, 'Sản Phẩm', false, () {
+                _buildNavItem(Icons.spa_rounded, 'Sản Phẩm', false, () {
                   Navigator.push(context,
                       MaterialPageRoute(builder: (context) => AdminProductScreen()));
                 }),

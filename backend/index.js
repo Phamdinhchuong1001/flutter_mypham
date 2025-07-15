@@ -9,14 +9,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// 🧩 Import các module
-const db = require('./db'); // Kết nối MySQL đã chuẩn hóa
-const adminRoutes = require('./routes/admin'); // Router admin
+// 📦 Kết nối MySQL
+const db = require('./db'); // File db.js kết nối database
+const adminRoutes = require('./routes/admin'); // Các route admin khác (nếu có)
 
-// 📂 Cho phép truy cập ảnh avatar
+// 📂 Cho phép truy cập ảnh
 app.use('/uploads', express.static('uploads'));
 
-// ⚙️ Cấu hình lưu ảnh avatar người dùng
+// ⚙️ Cấu hình multer lưu ảnh
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -28,7 +28,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 📌 API: Đăng ký
+/* ------------------------- TÀI KHOẢN NGƯỜI DÙNG ------------------------- */
+
+// ✅ Đăng ký
 app.post('/api/register', (req, res) => {
   const { name, email, password } = req.body;
   const hashed = bcrypt.hashSync(password, 8);
@@ -42,7 +44,7 @@ app.post('/api/register', (req, res) => {
   );
 });
 
-// 🔐 API: Đăng nhập
+// ✅ Đăng nhập
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
   db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
@@ -67,7 +69,7 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// ✏️ API: Cập nhật thông tin người dùng
+// ✅ Cập nhật thông tin người dùng
 app.put('/api/users/:id', (req, res) => {
   const userId = req.params.id;
   const { name, email, phone, location, oldPassword, newPassword } = req.body;
@@ -104,7 +106,7 @@ app.put('/api/users/:id', (req, res) => {
   });
 });
 
-// 🖼️ API: Cập nhật avatar
+// ✅ Cập nhật avatar người dùng
 app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   const userId = req.params.id;
   const fileName = req.file.filename;
@@ -116,10 +118,33 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   });
 });
 
-// 🛠️ Tích hợp router admin
+/* ------------------------- 📊 DASHBOARD ------------------------- */
+
+// ✅ Đếm tổng số người dùng
+app.get('/api/users/count', (req, res) => {
+  db.query('SELECT COUNT(*) AS totalUsers FROM users', (err, results) => {
+    if (err) return res.status(500).json({ message: 'Lỗi server khi đếm người dùng' });
+    res.json(results[0]); // { totalUsers: 5 }
+  });
+});
+
+// ✅ Lấy danh sách tất cả người dùng
+app.get('/api/users', (req, res) => {
+  db.query('SELECT * FROM users', (err, results) => {
+    if (err) {
+      console.error('Lỗi khi truy vấn danh sách users:', err);
+      return res.status(500).json({ message: 'Lỗi server khi truy vấn users' });
+    }
+    res.json(results); // Trả về mảng người dùng
+  });
+});
+
+/* ------------------------- KHÁC ------------------------- */
+
+// ✅ Gắn router admin
 app.use('/api/admin', adminRoutes);
 
-// 🚀 Khởi động server
+// ✅ Khởi động server
 app.listen(3000, () => {
-  console.log('🚀 Server chạy tại http://localhost:3000');
+  console.log('🚀 Server đang chạy tại http://localhost:3000');
 });
