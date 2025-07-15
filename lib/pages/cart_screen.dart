@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_appmypham/pages/payment_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -15,8 +14,8 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.orange, // ✅ nền AppBar trắng
-        foregroundColor: Colors.white, // ✅ màu chữ đen
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
         title: const Text("Giỏ Hàng"),
         leading: const BackButton(),
         centerTitle: true,
@@ -41,10 +40,10 @@ class _CartScreenState extends State<CartScreen> {
                   color: const Color(0xFFFFE6E6),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Spacer(),
-                    SvgPicture.string(trashIcon),
+                    Spacer(),
+                    Icon(Icons.delete_outline, color: Colors.red),
                   ],
                 ),
               ),
@@ -53,7 +52,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: CheckoutCard(), // gọi widget check out bên dưới
+      bottomNavigationBar: const CheckoutCard(),
     );
   }
 }
@@ -90,9 +89,11 @@ class CartCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(cart.product.title,
-                style: const TextStyle(color: Colors.black, fontSize: 16),
-                maxLines: 2),
+            Text(
+              cart.product.title,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+              maxLines: 2,
+            ),
             const SizedBox(height: 8),
             Text.rich(
               TextSpan(
@@ -101,11 +102,12 @@ class CartCard extends StatelessWidget {
                     fontWeight: FontWeight.w600, color: Color(0xFFFF7643)),
                 children: [
                   TextSpan(
-                      text: " x${cart.numOfItem}",
-                      style: Theme.of(context).textTheme.bodyLarge),
+                    text: " x${cart.numOfItem}",
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                 ],
               ),
-            )
+            ),
           ],
         )
       ],
@@ -137,58 +139,46 @@ class CheckoutCard extends StatelessWidget {
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  height: 40,
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F6F9),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SvgPicture.string(receiptIcon),
-                ),
-                const Spacer(),
-                const Text("Add voucher code"),
-                const SizedBox(width: 8),
-                const Icon(Icons.arrow_forward_ios, size: 12, color: Colors.black)
+              children: const [
+                Icon(Icons.receipt_long_outlined, color: Colors.grey),
+                Spacer(),
+                Text("Add voucher code"),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward_ios, size: 12, color: Colors.black),
               ],
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                const Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      text: "Total:\n",
-                      children: [
-                        TextSpan(
-                          text: "\$337.15",
-                          style: TextStyle(fontSize: 16, color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text("Total:", style: TextStyle(fontSize: 14)),
+                    Text("\$337.15",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
                 ),
-                Expanded(
+                const Spacer(),
+                SizedBox(
+                  width: 150,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      // ✅ Điều hướng đến trang thanh toán
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const CartPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const CartPage()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
-                      backgroundColor: const Color(0xFFFF7643),
+                      backgroundColor: Color(0xFFFF7643),
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text("Thanh toán"),
@@ -277,5 +267,3 @@ List<Product> demoProducts = [
 ];
 
 const String description = "Wireless Controller for PS4™ gives you what you want in your gaming from over precision control your games to sharing …";
-const receiptIcon = '''...'''; // giữ nguyên
-const trashIcon = '''...''';
