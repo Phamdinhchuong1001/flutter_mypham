@@ -63,7 +63,8 @@ app.post('/api/login', (req, res) => {
         email: user.email,
         phone: user.phone,
         location: user.location,
-        avatar: user.avatar ? `/uploads/${user.avatar}` : null
+        avatar: user.avatar ? `/uploads/${user.avatar}` : null,
+        role: user.role
       }
     });
   });

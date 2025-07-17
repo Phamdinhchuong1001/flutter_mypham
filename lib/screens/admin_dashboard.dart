@@ -10,17 +10,19 @@ import 'package:flutter_appmypham/services/admin_product_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-
 import '../services/admin_auth_service.dart';
 import '../utils/utils.dart';
 import 'notification/admin_notification_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({Key? key}) : super(key: key);
+  final Map<String, dynamic> user; // 👈 Thêm thuộc tính user
+
+  const AdminDashboard({Key? key, required this.user}) : super(key: key); // 👈 Nhận từ constructor
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
 }
+
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // Dashboard Statistics
@@ -256,66 +258,63 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildUserHeader() {
-  return FutureBuilder<String?>(
-    future: _authService.currentUser, // Giả sử getter này trả về Future<String?>
-    builder: (context, snapshot) {
-      final email = snapshot.data ?? "admin@gmail.com";
+    final name = widget.user['name'] ?? 'Chưa rõ tên';
+    final email = widget.user['email'] ?? 'Không rõ email';
 
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        color: mainColor,
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  )
-                ],
-              ),
-              child: Icon(
-                Icons.admin_panel_settings,
-                color: mainColor,
-                size: 36,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      color: mainColor,
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                )
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Quản Trị Viên',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              Icons.admin_panel_settings,
+              color: mainColor,
+              size: 36,
             ),
-          ],
-        ),
-      );
-    },
-  );
-}
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  email,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 
   Widget _buildNavItem(IconData icon, String title, bool isActive, VoidCallback onTap) {

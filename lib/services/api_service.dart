@@ -45,6 +45,7 @@ class ApiService {
             'phone': data['user']['phone'] ?? '',
             'location': data['user']['location'] ?? '',
             'avatar': data['user']['avatar'] ?? '',
+            'role': data['user']['role'] ?? 'admin',
           }
         };
       } else {

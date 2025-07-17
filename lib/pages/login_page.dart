@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_appmypham/screens/admin_dashboard.dart';
 import 'home_page.dart';
-import 'package:flutter_appmypham/services/api_service.dart'; // API service
-import 'package:flutter_appmypham/services/user_storage.dart'; // Để lưu dữ liệu user
+import 'package:flutter_appmypham/services/api_service.dart';
+import 'package:flutter_appmypham/services/user_storage.dart';
 
 class LoginPage extends StatelessWidget {
   final void Function()? onTap;
@@ -83,7 +84,7 @@ class _FormContentState extends State<_FormContent> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // ✅ Hàm xử lý đăng nhập
+  // ✅ Hàm xử lý đăng nhập và phân quyền
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -97,18 +98,29 @@ class _FormContentState extends State<_FormContent> {
     setState(() => _isLoading = false);
 
     if (result['success'] == true && result['data'] != null) {
-      // ✅ Lưu thông tin người dùng vào SharedPreferences
+      // ✅ Lưu thông tin vào SharedPreferences
       await UserStorage.saveUserData(result['data']);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Đăng nhập thành công")),
       );
 
-      // ✅ Điều hướng đến HomePage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+      final role = result['data']['role'];
+      if (role == 'admin') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminDashboard(user: result['data']),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(), // Hoặc UserHomeScreen(user: ...)
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result['message'] ?? 'Đăng nhập thất bại')),
@@ -129,8 +141,6 @@ class _FormContentState extends State<_FormContent> {
                 ),
           ),
           const SizedBox(height: 32),
-
-          // 🟢 Ô nhập Email
           TextFormField(
             controller: emailController,
             decoration: InputDecoration(
@@ -152,8 +162,6 @@ class _FormContentState extends State<_FormContent> {
             },
           ),
           const SizedBox(height: 16),
-
-          // 🟢 Ô nhập Mật khẩu
           TextFormField(
             controller: passwordController,
             obscureText: !_isPasswordVisible,
@@ -187,10 +195,7 @@ class _FormContentState extends State<_FormContent> {
               return null;
             },
           ),
-
           const SizedBox(height: 24),
-
-          // 🟢 Nút đăng nhập
           SizedBox(
             width: double.infinity,
             child: _isLoading
@@ -208,8 +213,6 @@ class _FormContentState extends State<_FormContent> {
                   ),
           ),
           const SizedBox(height: 16),
-
-          // 🔸 Text "Quên mật khẩu"
           TextButton(
             onPressed: () {},
             child: Text(
@@ -219,8 +222,6 @@ class _FormContentState extends State<_FormContent> {
                   ),
             ),
           ),
-
-          // 🔸 Text chuyển sang đăng ký
           TextButton(
             onPressed: widget.onTap,
             child: Text.rich(
