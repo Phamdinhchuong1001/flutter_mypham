@@ -171,4 +171,70 @@ class ApiService {
     }
     return null;
   }
+
+  // ================================
+  //         THÔNG BÁO
+  // ================================
+
+  /// Gửi thông báo từ admin
+  static Future<String?> sendNotification({
+    required int userId,
+    required String title,
+    required String content,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/notifications'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'title': title,
+          'content': content,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return response.statusCode == 200
+          ? data['message']
+          : data['message'] ?? 'Gửi thông báo thất bại';
+    } catch (e) {
+      return 'Lỗi kết nối khi gửi thông báo: $e';
+    }
+  }
+
+  /// Lấy danh sách thông báo của người dùng
+  static Future<List<Map<String, dynamic>>> getNotifications(int userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifications/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<int> getUnreadNotificationCount(int userId) async {
+  try {
+    final response = await http.get(Uri.parse('$baseUrl/notifications/$userId/unread-count'));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['unreadCount'] ?? 0;
+    }
+  } catch (_) {}
+  return 0;
+}
+
+static Future<void> markNotificationsAsRead(int userId) async {
+  try {
+    await http.put(Uri.parse('$baseUrl/notifications/$userId/mark-as-read'));
+  } catch (_) {}
+}
+
 }

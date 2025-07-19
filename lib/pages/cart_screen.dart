@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_appmypham/pages/payment_page.dart';
+import 'package:flutter_appmypham/services/user_storage.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -9,6 +10,23 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  int? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+   final data = await UserStorage.getUserData();
+if (data != null && data['id'] != null) {
+  setState(() {
+    userId = data['id'];
+  });
+}
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,7 +70,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: const CheckoutCard(),
+      bottomNavigationBar: CheckoutCard(userId: userId),
     );
   }
 }
@@ -116,7 +134,9 @@ class CartCard extends StatelessWidget {
 }
 
 class CheckoutCard extends StatelessWidget {
-  const CheckoutCard({Key? key}) : super(key: key);
+  final int? userId;
+
+  const CheckoutCard({Key? key, required this.userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -166,13 +186,17 @@ class CheckoutCard extends StatelessWidget {
                   width: 150,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CartPage()),
-                      );
-                    },
+                    onPressed: userId == null
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CartPage(userId: userId!), // ✅ truyền userId
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
                       backgroundColor: Color(0xFFFF7643),

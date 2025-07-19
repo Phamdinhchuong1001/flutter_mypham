@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+
 class PaymentSuccessfulPage extends StatelessWidget {
-  const PaymentSuccessfulPage({super.key});
+  final int userId;
+
+  const PaymentSuccessfulPage({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +13,7 @@ class PaymentSuccessfulPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 100),
+            const Icon(Icons.check_circle, color: Colors.green, size: 100),
             const SizedBox(height: 20),
             const Text(
               "Thank you for your payment!",
@@ -24,10 +27,10 @@ class PaymentSuccessfulPage extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomePage()),
-                      );
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage(userId: userId)),
+                );
               },
               child: const Text("Về trang chủ"),
             ),

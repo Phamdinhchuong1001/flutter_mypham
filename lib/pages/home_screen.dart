@@ -1,36 +1,45 @@
-// ignore_for_file: use_key_in_widget_constructors
-
 import 'package:flutter/material.dart';
+import 'package:flutter_appmypham/pages/user_notification_screen.dart';
 import 'package:video_player/video_player.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
+  final int userId;
+
+  const HomeScreen({super.key, required this.userId});
+
   @override
   HomeScreenState createState() => HomeScreenState();
 }
 
 class HomeScreenState extends State<HomeScreen> {
   late VideoPlayerController _controller;
+  int unreadCount = 0;
 
   @override
   void initState() {
     super.initState();
-    // Khởi tạo video và cấu hình phát lại
     _controller = VideoPlayerController.asset("assets/video/videococoon.mp4")
       ..initialize().then((_) {
         setState(() {});
-        _controller.setLooping(true); // Lặp video
-        _controller.setVolume(0); // Tắt âm thanh
-        _controller.play(); // Phát video
+        _controller.setLooping(true);
+        _controller.setVolume(0);
+        _controller.play();
       });
+    fetchUnreadCount();
+  }
+
+  Future<void> fetchUnreadCount() async {
+    final count = await ApiService.getUnreadNotificationCount(widget.userId);
+    setState(() => unreadCount = count);
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Giải phóng video khi thoát
+    _controller.dispose();
     super.dispose();
   }
 
-  // Widget card danh mục sản phẩm ở phần "Special for You"
   Widget buildCategoryCard(String image, String label, String brands) {
     return Container(
       width: 160,
@@ -51,7 +60,9 @@ class HomeScreenState extends State<HomeScreen> {
           children: [
             Text(label,
                 style: const TextStyle(
-                    fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold)),
             Text(brands,
                 style: const TextStyle(fontSize: 12, color: Colors.white70)),
           ],
@@ -60,7 +71,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget card sản phẩm phổ biến
   Widget buildPopularProductCard(String imgPath) {
     return Container(
       decoration: BoxDecoration(
@@ -74,19 +84,57 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget buildIngredientCard(
+      String title, String desc, String imagePath, Color bgColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 20)],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 5,
+            child: Image.asset(imagePath, fit: BoxFit.contain),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            flex: 3,
+            child: Text(
+              desc,
+              style: const TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🔍 Thanh tìm kiếm
+            // 🔍 Thanh tìm kiếm + chuông thông báo
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(16, 40, 16, 12),
               child: Row(
                 children: [
-                  // Ô tìm kiếm
                   Expanded(
                     child: Container(
                       height: 40,
@@ -112,25 +160,34 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // 🔔 Thông báo với chấm đỏ
+                  // 🔔 Nút thông báo
                   Stack(
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => UserNotificationScreen(userId: widget.userId),
+                            ),
+                          );
+                          fetchUnreadCount(); // Load lại khi trở về
+                        },
                         icon: const Icon(Icons.notifications_none),
                       ),
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 6,
+                          top: 6,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -146,15 +203,15 @@ class HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 24),
 
-            // 🟣 SPECIAL FOR YOU - Có thể cuộn ngang
+            // Special for you
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
                   Text("Special for you",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 ],
               ),
             ),
@@ -162,29 +219,28 @@ class HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: 100,
               child: ListView(
-                scrollDirection: Axis.horizontal, // 🔁 Cho phép cuộn ngang
+                scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   buildCategoryCard("assets/images/taytebaochet.jpg", "Skincare", "18 Brands"),
                   buildCategoryCard("assets/images/kemthoatay.jpg", "Fashion", "24 Brands"),
                   buildCategoryCard("assets/images/duongtoc.jpg", "Fashion", "24 Brands"),
                   buildCategoryCard("assets/images/gelruamat.jpg", "Fashion", "24 Brands"),
-                  // Có thể thêm sản phẩm nữa ở đây
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // 🟣 POPULAR PRODUCT
+            // Popular Product
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
                   Text("Popular Product",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   Text("See More",
                       style: TextStyle(
                           fontSize: 14,
@@ -214,7 +270,7 @@ class HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 24),
 
-            // 🟩 SẢN PHẨM AN LÀNH
+            // Sản phẩm An Lành
             const Padding(
               padding: EdgeInsets.only(top: 12, bottom: 1),
               child: Text(
@@ -242,47 +298,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Widget cho phần "Sản phẩm An Lành"
-  Widget buildIngredientCard(String title, String desc, String imagePath, Color bgColor) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 20)],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Expanded(
-            flex: 3,
-            child: Text(
-              desc,
-              style: const TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart'; // Thư viện giao diện Flutter
 import 'package:provider/provider.dart'; // Thư viện quản lý trạng thái Provider
 import 'package:flutter_appmypham/auth/login_or_register.dart'; // Import màn hình LoginOrRegister
 import 'package:flutter_appmypham/themes/theme_provider.dart'; // Import class ThemeProvider để xử lý giao diện tối/sáng
-
 // Hàm main là điểm khởi đầu của ứng dụng
 void main() {
   runApp(

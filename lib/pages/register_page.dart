@@ -23,52 +23,55 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // ✅ Hàm xử lý đăng ký
   void _register() async {
-    if (_formKey.currentState!.validate()) {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-      final name = email.split('@')[0];
+  if (_formKey.currentState!.validate()) {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final name = email.split('@')[0];
 
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
 
-      final error = await ApiService.register(name, email, password);
+    final error = await ApiService.register(name, email, password);
 
-      if (!mounted) return;
-      Navigator.pop(context); // ❌ Đóng loading
+    if (!mounted) return;
+    Navigator.pop(context); // ❌ Đóng loading
 
-      if (error == null) {
-        // ✅ Đăng ký xong thì đăng nhập để lấy dữ liệu
-        final loginResult = await ApiService.login(email, password);
+    if (error == null) {
+      // ✅ Đăng ký xong thì đăng nhập để lấy dữ liệu
+      final loginResult = await ApiService.login(email, password);
 
-        if (loginResult['success'] == true && loginResult['data'] != null) {
-          await UserStorage.saveUserData(loginResult['data']);
+      if (loginResult['success'] == true && loginResult['data'] != null) {
+        await UserStorage.saveUserData(loginResult['data']);
 
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Đăng ký thành công')),
-          );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Đăng ký thành công')),
+        );
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(loginResult['message'] ?? 'Không thể đăng nhập sau khi đăng ký'),
-            ),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(userId: loginResult['data']['id']),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ $error')),
+          SnackBar(
+            content: Text(loginResult['message'] ?? 'Không thể đăng nhập sau khi đăng ký'),
+          ),
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ $error')),
+      );
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,8 @@ import 'package:flutter_appmypham/pages/menu_profile_screen.dart';
 import 'package:flutter_appmypham/pages/products_screen.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int userId; // ✅ Thêm userId
+  const HomePage({super.key, required this.userId}); // ✅ Bắt buộc truyền userId
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -16,12 +17,18 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    HomeScreen(),                             // Trang Home
-    ProductsScreen(),  // Trang SP iu thich
-    CartScreen(),          // Trang Cart
-    MenuProfileScreen(),                          // Trang Profile
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomeScreen(userId: widget.userId),     // ✅ Truyền userId vào HomeScreen
+      ProductsScreen(),
+      CartScreen(),
+      MenuProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

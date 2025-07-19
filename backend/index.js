@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-/* ------------------------- TÀI KHOẢN NGƯỜI DÙNG ------------------------- */
+/* ------------------------- 🧑‍💼 TÀI KHOẢN NGƯỜI DÙNG ------------------------- */
 
 // ✅ Đăng ký
 app.post('/api/register', (req, res) => {
@@ -125,7 +125,7 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
 app.get('/api/users/count', (req, res) => {
   db.query('SELECT COUNT(*) AS totalUsers FROM users', (err, results) => {
     if (err) return res.status(500).json({ message: 'Lỗi server khi đếm người dùng' });
-    res.json(results[0]); // { totalUsers: 5 }
+    res.json(results[0]);
   });
 });
 
@@ -136,16 +136,98 @@ app.get('/api/users', (req, res) => {
       console.error('Lỗi khi truy vấn danh sách users:', err);
       return res.status(500).json({ message: 'Lỗi server khi truy vấn users' });
     }
-    res.json(results); // Trả về mảng người dùng
+    res.json(results);
   });
 });
 
-/* ------------------------- KHÁC ------------------------- */
+/* ------------------------- 🔔 THÔNG BÁO ------------------------- */
 
-// ✅ Gắn router admin
+// ✅ Gửi thông báo từ người dùng (user app)
+app.post('/api/notifications', (req, res) => {
+  const { user_id, title, content } = req.body;
+  const createdAt = new Date();
+
+  db.query(
+    'INSERT INTO notifications (user_id, title, content, is_read, created_at) VALUES (?, ?, ?, 0, ?)',
+    [user_id, title, content, createdAt],
+    (err) => {
+      if (err) {
+        console.error('Lỗi khi thêm thông báo:', err);
+        return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
+      }
+      res.json({ message: 'Gửi thông báo thành công' });
+    }
+  );
+});
+
+// ✅ API mới: Gửi thông báo từ Flutter Admin
+app.post('/send-notification', (req, res) => {
+  const { userId, title, body } = req.body;
+  const createdAt = new Date();
+
+  if (!userId || !title || !body) {
+    return res.status(400).json({ message: 'Thiếu dữ liệu' });
+  }
+
+  db.query(
+    'INSERT INTO notifications (user_id, title, content, is_read, created_at) VALUES (?, ?, ?, 0, ?)',
+    [userId, title, body, createdAt],
+    (err) => {
+      if (err) {
+        console.error('❌ Lỗi khi gửi thông báo:', err);
+        return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
+      }
+      res.status(200).json({ message: 'Gửi thông báo thành công' });
+    }
+  );
+});
+
+// ✅ Lấy danh sách thông báo theo user
+app.get('/api/notifications/:userId', (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC',
+    [userId],
+    (err, results) => {
+      if (err) {
+        console.error('Lỗi khi lấy thông báo:', err);
+        return res.status(500).json({ message: 'Lỗi khi lấy thông báo' });
+      }
+      res.json(results);
+    }
+  );
+});
+
+// ✅ Đếm số thông báo chưa đọc
+app.get('/api/notifications/:userId/unread-count', (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    'SELECT COUNT(*) AS unreadCount FROM notifications WHERE user_id = ? AND is_read = 0',
+    [userId],
+    (err, results) => {
+      if (err) return res.status(500).json({ message: 'Lỗi khi đếm thông báo chưa đọc' });
+      res.json({ unreadCount: results[0].unreadCount });
+    }
+  );
+});
+
+// ✅ Đánh dấu đã đọc tất cả thông báo
+app.put('/api/notifications/:userId/mark-as-read', (req, res) => {
+  const userId = req.params.userId;
+  db.query(
+    'UPDATE notifications SET is_read = 1 WHERE user_id = ?',
+    [userId],
+    (err) => {
+      if (err) return res.status(500).json({ message: 'Lỗi khi đánh dấu đã đọc' });
+      res.json({ message: 'Tất cả thông báo đã được đánh dấu đã đọc' });
+    }
+  );
+});
+
+/* ------------------------- 🔗 ROUTER ADMIN & SERVER ------------------------- */
+
 app.use('/api/admin', adminRoutes);
 
-// ✅ Khởi động server
 app.listen(3000, () => {
   console.log('🚀 Server đang chạy tại http://localhost:3000');
 });

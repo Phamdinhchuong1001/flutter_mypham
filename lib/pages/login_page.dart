@@ -106,6 +106,8 @@ class _FormContentState extends State<_FormContent> {
       );
 
       final role = result['data']['role'];
+      final int userId = result['data']['id']; // ✅ Lấy userId từ API
+
       if (role == 'admin') {
         Navigator.pushReplacement(
           context,
@@ -117,7 +119,7 @@ class _FormContentState extends State<_FormContent> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(), // Hoặc UserHomeScreen(user: ...)
+            builder: (context) => HomePage(userId: userId), // ✅ Truyền userId
           ),
         );
       }
