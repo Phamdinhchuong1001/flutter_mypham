@@ -18,9 +18,7 @@ app.use('/uploads', express.static('uploads'));
 
 // ⚙️ Cấu hình multer lưu ảnh
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
+  destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, 'user_' + Date.now() + ext);
@@ -70,6 +68,32 @@ app.post('/api/login', (req, res) => {
   });
 });
 
+// ✅ Lấy thông tin người dùng theo ID (API BỊ THIẾU – đã thêm)
+app.get('/api/users/:id', (req, res) => {
+  const userId = req.params.id;
+  db.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy user' });
+    }
+    res.json(results[0]);
+  });
+});
+
+// ✅ Tạo người dùng mới (API BỊ THIẾU – đã thêm)
+app.post('/api/users', (req, res) => {
+  const { name, email, phone, location, password } = req.body;
+  const hashed = bcrypt.hashSync(password, 8);
+
+  db.query(
+    'INSERT INTO users (name, email, phone, location, password) VALUES (?, ?, ?, ?, ?)',
+    [name, email, phone, location, hashed],
+    (err, result) => {
+      if (err) return res.status(400).json({ message: 'Lỗi tạo user' });
+      res.status(200).json({ message: 'Tạo người dùng thành công', id: result.insertId });
+    }
+  );
+});
+
 // ✅ Cập nhật thông tin người dùng
 app.put('/api/users/:id', (req, res) => {
   const userId = req.params.id;
@@ -107,7 +131,7 @@ app.put('/api/users/:id', (req, res) => {
   });
 });
 
-// ✅ Cập nhật avatar người dùng
+// ✅ Cập nhật avatar
 app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   const userId = req.params.id;
   const fileName = req.file.filename;
@@ -119,7 +143,16 @@ app.post('/api/users/:id/avatar', upload.single('avatar'), (req, res) => {
   });
 });
 
-/* ------------------------- 📊 DASHBOARD ------------------------- */
+// ✅ Xoá người dùng
+app.delete('/api/users/:id', (req, res) => {
+  const userId = req.params.id;
+  db.query('DELETE FROM users WHERE id = ?', [userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Lỗi khi xoá người dùng' });
+    if (result.affectedRows === 0)
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    res.json({ message: 'Xoá người dùng thành công' });
+  });
+});
 
 // ✅ Đếm tổng số người dùng
 app.get('/api/users/count', (req, res) => {
@@ -132,51 +165,40 @@ app.get('/api/users/count', (req, res) => {
 // ✅ Lấy danh sách tất cả người dùng
 app.get('/api/users', (req, res) => {
   db.query('SELECT * FROM users', (err, results) => {
-    if (err) {
-      console.error('Lỗi khi truy vấn danh sách users:', err);
-      return res.status(500).json({ message: 'Lỗi server khi truy vấn users' });
-    }
+    if (err) return res.status(500).json({ message: 'Lỗi khi truy vấn users' });
     res.json(results);
   });
 });
 
 /* ------------------------- 🔔 THÔNG BÁO ------------------------- */
 
-// ✅ Gửi thông báo từ người dùng (user app)
+// ✅ Gửi thông báo từ user
 app.post('/api/notifications', (req, res) => {
   const { user_id, title, content } = req.body;
   const createdAt = new Date();
-
   db.query(
     'INSERT INTO notifications (user_id, title, content, is_read, created_at) VALUES (?, ?, ?, 0, ?)',
     [user_id, title, content, createdAt],
     (err) => {
-      if (err) {
-        console.error('Lỗi khi thêm thông báo:', err);
-        return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
-      }
+      if (err) return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
       res.json({ message: 'Gửi thông báo thành công' });
     }
   );
 });
 
-// ✅ API mới: Gửi thông báo từ Flutter Admin
+// ✅ Gửi thông báo từ Flutter Admin
 app.post('/send-notification', (req, res) => {
   const { userId, title, body } = req.body;
   const createdAt = new Date();
 
-  if (!userId || !title || !body) {
+  if (!userId || !title || !body)
     return res.status(400).json({ message: 'Thiếu dữ liệu' });
-  }
 
   db.query(
     'INSERT INTO notifications (user_id, title, content, is_read, created_at) VALUES (?, ?, ?, 0, ?)',
     [userId, title, body, createdAt],
     (err) => {
-      if (err) {
-        console.error('❌ Lỗi khi gửi thông báo:', err);
-        return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
-      }
+      if (err) return res.status(500).json({ message: 'Lỗi khi gửi thông báo' });
       res.status(200).json({ message: 'Gửi thông báo thành công' });
     }
   );
@@ -189,10 +211,7 @@ app.get('/api/notifications/:userId', (req, res) => {
     'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC',
     [userId],
     (err, results) => {
-      if (err) {
-        console.error('Lỗi khi lấy thông báo:', err);
-        return res.status(500).json({ message: 'Lỗi khi lấy thông báo' });
-      }
+      if (err) return res.status(500).json({ message: 'Lỗi khi lấy thông báo' });
       res.json(results);
     }
   );
@@ -227,7 +246,6 @@ app.put('/api/notifications/:userId/mark-as-read', (req, res) => {
 /* ------------------------- 🔗 ROUTER ADMIN & SERVER ------------------------- */
 
 app.use('/api/admin', adminRoutes);
-
-app.listen(3000, () => {
-  console.log('🚀 Server đang chạy tại http://localhost:3000');
+app.listen(3000, '0.0.0.0', () => {
+  console.log('🚀 Server đang chạy tại http://0.0.0.0:3000');
 });

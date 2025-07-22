@@ -5,6 +5,7 @@ class UserInfo {
   final String phone;
   final String location;
   final String? avatar;
+  final String? password;
 
   UserInfo({
     required this.id,
@@ -13,6 +14,7 @@ class UserInfo {
     required this.phone,
     required this.location,
     this.avatar,
+    this.password,
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {

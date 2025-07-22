@@ -79,6 +79,29 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
     _filteredUsers = filteredList;
   });
 }
+void _confirmDeleteUser(String userId) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Xác nhận xoá'),
+      content: const Text('Bạn có chắc muốn xoá người dùng này không?'),
+      actions: [
+        TextButton(
+          child: const Text('Hủy'),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        TextButton(
+          child: const Text('Xoá', style: TextStyle(color: Colors.red)),
+          onPressed: () async {
+            Navigator.of(context).pop(); // Đóng dialog trước
+            await _deleteUser(userId);   // Gọi API xoá
+          },
+        ),
+      ],
+    ),
+  );
+}
+
 
 
   Future<void> _deleteUser(String userId) async {
@@ -200,18 +223,6 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
               ),
             ),
             cursorColor: mainColor,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text('Lọc:', style: TextStyle(fontWeight: FontWeight.bold, color: mainColor)),
-              const SizedBox(width: 8),
-              _buildFilterChip('Tất cả'),
-              const SizedBox(width: 8),
-              _buildFilterChip('Có coupon'),
-              const SizedBox(width: 8),
-              _buildFilterChip('Không có coupon'),
-            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -408,7 +419,8 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
     );
   }
 
-  Widget _buildUserList() {
+
+Widget _buildUserList() {
   return ListView.builder(
     padding: const EdgeInsets.all(16),
     itemCount: _filteredUsers.length,
@@ -443,6 +455,7 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Phần header chứa avatar + tên + id
                 Row(
                   children: [
                     CircleAvatar(
@@ -481,41 +494,71 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.edit, color: accentColor),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditUserScreen(
-                              isNewUser: false,
-                              userId: user.id.toString(),
-                            ),
-                          ),
-                        );
-                        if (result == true) {
-                          _loadUsers();
-                        }
-                      },
-                    ),
+                   Column(
+  children: [
+    IconButton(
+      icon: Icon(Icons.delete, color: Colors.red),
+      onPressed: () {
+        _confirmDeleteUser(user.id.toString());
+      },
+    ),
+    IconButton(
+      icon: Icon(Icons.edit, color: Colors.blue),
+      onPressed: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditUserScreen(
+              isNewUser: false,
+              userId: user.id.toString(),
+            ),
+          ),
+        );
+        if (result == true) {
+          _loadUsers(); // Load lại danh sách nếu chỉnh sửa thành công
+        }
+      },
+    ),
+  ],
+),
+
+
                   ],
                 ),
                 const SizedBox(height: 8),
                 Divider(color: ultraLightColor, thickness: 1),
                 const SizedBox(height: 8),
+
+                // Phần thông tin liên lạc: SĐT - Email - Địa chỉ
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Icon(Icons.phone, size: 16, color: lightColor),
+                    const SizedBox(width: 6),
                     Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.phone, size: 16, color: lightColor),
-                          const SizedBox(width: 4),
-                          Text(
-                            user.phone,
-                            style: TextStyle(color: accentColor),
-                          ),
-                        ],
-                      ),
+                      child: Text(user.phone, style: TextStyle(color: accentColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.email, size: 16, color: lightColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(user.email, style: TextStyle(color: accentColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.location_on, size: 16, color: lightColor),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(user.location, style: TextStyle(color: accentColor)),
                     ),
                   ],
                 ),
@@ -527,5 +570,6 @@ class _AdminUserScreenState extends State<AdminUserScreen> {
     },
   );
 }
+
 
 }

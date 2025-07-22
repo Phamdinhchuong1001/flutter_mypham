@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_appmypham/models/user_info.dart';
 
 class AdminAccountService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://172.20.10.5:3000/api'; // ✅ Đúng IP của bạn
+
 
   Future<List<UserInfo>> getAllUsers() async {
     try {
