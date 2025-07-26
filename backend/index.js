@@ -243,6 +243,86 @@ app.put('/api/notifications/:userId/mark-as-read', (req, res) => {
   );
 });
 
+/* ------------------------- PRODUCT ------------------------- */
+// ✅ Thêm sản phẩm mới
+app.post('/api/products', (req, res) => {
+  const { name, image, description, price } = req.body;
+  console.log('📥 Dữ liệu nhận từ Flutter:', req.body);
+  if (!name || !image || !description || !price) {
+    return res.status(400).json({ message: 'Thiếu thông tin sản phẩm' });
+  }
+
+  const sql = 'INSERT INTO products (name, image, description, price) VALUES (?, ?, ?, ?)';
+  db.query(sql, [name, image, description, price], (err, result) => {
+    if (err) {
+      console.error('Lỗi khi thêm sản phẩm:', err);
+      return res.status(500).json({ message: 'Lỗi server' });
+    }
+    res.status(201).json({ message: 'Thêm sản phẩm thành công', id: result.insertId });
+  });
+});
+
+// ✅ Lấy danh sách sản phẩm
+app.get('/api/products', (req, res) => {
+  const sql = 'SELECT * FROM products';
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Lỗi khi lấy danh sách sản phẩm:', err);
+      return res.status(500).json({ message: 'Lỗi server' });
+    }
+    res.json(results);
+  });
+});
+
+// ✅ Cập nhật sản phẩm
+app.put('/api/products/:id', (req, res) => {
+  const { name, image, description, price } = req.body;
+  const { id } = req.params;
+
+  console.log('📥 Nhận PUT:', req.params, req.body); // 👈 THÊM LOG NÀY
+
+  if (!name || !image || !description || !price) {
+    return res.status(400).json({ message: 'Thiếu thông tin sản phẩm' });
+  }
+
+  const sql = 'UPDATE products SET name = ?, image = ?, description = ?, price = ? WHERE id = ?';
+  db.query(sql, [name, image, description, price, id], (err, result) => {
+    if (err) {
+      console.error('❌ Lỗi khi cập nhật sản phẩm:', err);
+      return res.status(500).json({ message: 'Lỗi server' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy sản phẩm để cập nhật' });
+    }
+
+    console.log('✅ Cập nhật thành công sản phẩm ID:', id); // 👈 THÊM LOG NÀY
+    res.status(200).json({ message: '✅ Cập nhật sản phẩm thành công' });
+  });
+});
+
+// ✅ Xóa sản phẩm
+app.delete('/api/products/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sql = 'DELETE FROM products WHERE id = ?';
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('❌ Lỗi khi xoá sản phẩm:', err);
+      return res.status(500).json({ message: 'Lỗi server khi xoá sản phẩm' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Không tìm thấy sản phẩm để xoá' });
+    }
+
+    console.log(`🗑️ Đã xoá sản phẩm ID ${id}`);
+    res.status(200).json({ message: '✅ Xoá sản phẩm thành công' });
+  });
+});
+
+
+
 /* ------------------------- 🔗 ROUTER ADMIN & SERVER ------------------------- */
 
 app.use('/api/admin', adminRoutes);

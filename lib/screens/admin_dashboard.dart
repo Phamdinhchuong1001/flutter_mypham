@@ -1,3 +1,4 @@
+// admin_dashboard.dart
 import 'package:flutter_appmypham/auth/login_or_register.dart';
 import 'package:flutter_appmypham/models/order.dart';
 import 'package:flutter_appmypham/screens/address/admin_address_screen.dart';
@@ -15,30 +16,26 @@ import '../utils/utils.dart';
 import 'notification/admin_notification_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
-  final Map<String, dynamic> user; // 👈 Thêm thuộc tính user
-
-  const AdminDashboard({Key? key, required this.user}) : super(key: key); // 👈 Nhận từ constructor
+  final Map<String, dynamic> user;
+  const AdminDashboard({Key? key, required this.user}) : super(key: key);
 
   @override
   _AdminDashboardState createState() => _AdminDashboardState();
 }
 
-
 class _AdminDashboardState extends State<AdminDashboard> {
-  // Dashboard Statistics
+  int totalProducts = 0;
   int totalUsers = 0;
   int totalOrders = 0;
   double totalRevenue = 0;
   List<dynamic> topProducts = [];
   List<OrderProduct> recentOrders = [];
 
-  // Main theme color and complementary palette
-  final Color mainColor = Color(0xFF162F4A);     // Deep blue - primary
-  final Color accentColor = Color(0xFF3A5F82);   // Medium blue - secondary
-  final Color lightColor = Color(0xFF718EA4);    // Light blue - tertiary
-  final Color ultraLightColor = Color(0xFFD0DCE7); // Very light blue - background
+  final Color mainColor = Color(0xFF162F4A);
+  final Color accentColor = Color(0xFF3A5F82);
+  final Color lightColor = Color(0xFF718EA4);
+  final Color ultraLightColor = Color(0xFFD0DCE7);
 
-  // Service instances
   final _userService = AdminAccountService();
   final _orderService = AdminOrderService();
   final _productService = AdminProductService();
@@ -51,43 +48,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<void> fetchDashboardData() async {
-  try {
-    //  Gọi API và cập nhật UI
-    final userCount = await _userService.getTotalUsersCount();
-    setState(() {
-      totalUsers = userCount;
-    });
+    try {
+      final userCount = await _userService.getTotalUsersCount();
+      final productCount = await _productService.getTotalProductsCount();
+      final orderAnalytics = await _orderService.getOrderAnalytics();
+      final recentOrdersData = await _orderService.getRecentOrders();
 
-    //  Các đoạn sau giữ nguyên
-    final orderAnalytics = await _orderService.getOrderAnalytics();
-    setState(() {
-      totalOrders = orderAnalytics['totalOrders'] ?? 0;
-      totalRevenue = orderAnalytics['totalRevenue'] ?? 0.0;
-    });
+      setState(() {
+        totalUsers = userCount;
+        totalProducts = productCount;
+        totalOrders = orderAnalytics['totalOrders'] ?? 0;
+        totalRevenue = orderAnalytics['totalRevenue'] ?? 0.0;
+        recentOrders = recentOrdersData;
+      });
+    } catch (e) {
+      print('Lỗi khi tải dữ liệu bảng điều khiển: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Text('Không thể tải dữ liệu: $e')),
+      );
 
-    final topProductsData = await _productService.getTopSellingProducts();
-    final orderAnalyticsProductSales = orderAnalytics['productSales'] ?? {};
-    setState(() {
-      topProducts = topProductsData
-          .map((product) => {
-                ...product.toJson(),
-                'salesCount': orderAnalyticsProductSales[product.id] ?? 0
-              })
-          .toList();
-    });
-
-    final recentOrdersData = await _orderService.getRecentOrders();
-    setState(() {
-      recentOrders = recentOrdersData.map((order) => order).toList();
-    });
-  } catch (e) {
-    print('Lỗi khi tải dữ liệu bảng điều khiển: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Không thể tải dữ liệu: $e')),
-    );
+    }
   }
-}
-
 
   void _handleLogout() async {
     await _authService.logout();
@@ -104,15 +85,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
       appBar: _buildAppBar(),
       body: Row(
         children: [
-          // Sidebar Navigation
-          if (MediaQuery.of(context).size.width > 600)
-            _buildSidebar(),
-          // Drawer for mobile
+          if (MediaQuery.of(context).size.width > 600) _buildSidebar(),
           if (MediaQuery.of(context).size.width <= 600)
-            Drawer(
-              child: _buildSidebar(),
-            ),
-          // Main Dashboard Content
+            Drawer(child: _buildSidebar()),
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
@@ -120,34 +95,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Quick Stats Cards
                     _buildQuickStatsRow(),
-
                     const SizedBox(height: 20),
-
-                    // Charts and Detailed Stats
                     MediaQuery.of(context).size.width > 1000
                         ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Top Products Chart
-                        Expanded(
-                          child: _buildTopProductsChart(),
-                        ),
-                        const SizedBox(width: 20),
-                        // Recent Orders
-                        Expanded(
-                          child: _buildRecentOrdersList(),
-                        ),
-                      ],
-                    )
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _buildTopProductsChart()),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildRecentOrdersList()),
+                            ],
+                          )
                         : Column(
-                      children: [
-                        _buildTopProductsChart(),
-                        const SizedBox(height: 20),
-                        _buildRecentOrdersList(),
-                      ],
-                    ),
+                            children: [
+                              _buildTopProductsChart(),
+                              const SizedBox(height: 20),
+                              _buildRecentOrdersList(),
+                            ],
+                          ),
                   ],
                 ),
               ),
@@ -203,14 +168,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
         _buildStatCard(
           title: 'Tổng Đơn Hàng',
           value: totalOrders.toString(),
-          icon: Icons.shopping_cart,
+          icon: Icons.shopping_bag,
           color: accentColor,
         ),
         _buildStatCard(
-          title: 'Tổng Doanh Thu',
-          value: NumberFormat.currency(symbol: 'đ').format(totalRevenue),
-          icon: Icons.monetization_on,
+          title: 'Tổng Sản Phẩm',
+          value: totalProducts.toString(),
+          icon: Icons.shopping_cart,
           color: lightColor,
+        ),
+        _buildStatCard(
+          title: 'Tổng Doanh Thu',
+          value: NumberFormat.currency(locale: 'vi_VN', symbol: '₫')
+              .format(totalRevenue),
+          icon: Icons.monetization_on,
+          color: Colors.green.shade700,
         ),
       ],
     );
