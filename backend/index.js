@@ -321,6 +321,18 @@ app.delete('/api/products/:id', (req, res) => {
   });
 });
 
+// ✅ Đếm tổng số sản phẩm
+app.get('/api/products/count', (req, res) => {
+  const sql = 'SELECT COUNT(*) AS totalProducts FROM products';
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('❌ Lỗi khi đếm sản phẩm:', err);
+      return res.status(500).json({ message: 'Lỗi server khi đếm sản phẩm' });
+    }
+    res.json({ totalProducts: results[0].totalProducts });
+  });
+});
+
 
 
 /* ------------------------- 🔗 ROUTER ADMIN & SERVER ------------------------- */

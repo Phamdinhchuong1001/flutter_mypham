@@ -69,16 +69,17 @@ class AdminAccountService {
     }
   }
 
-  Future<int> getTotalUsersCount() async {
-    try {
-      final response = await http.get(Uri.parse('$baseUrl/users/count'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['totalUsers'] ?? 0;
-      }
-    } catch (e) {
-      print('Error getTotalUsersCount: $e');
+ Future<int> getTotalUsersCount() async {
+  try {
+    final response = await http.get(Uri.parse('$baseUrl/admin/users/count')); // ❗Không thêm /api nữa
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['totalUsers'] ?? 0;
     }
-    return 0;
+  } catch (e) {
+    print('Error getTotalUsersCount: $e');
   }
+  return 0;
+}
+
 }

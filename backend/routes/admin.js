@@ -3,12 +3,17 @@ const router = express.Router();
 const db = require('../db'); // bạn sẽ tạo file này (nếu chưa có) để kết nối MySQL
 
 // 📊 Tổng số người dùng
-router.get('/users/count', (req, res) => {
-  db.query('SELECT COUNT(*) AS total FROM users', (err, results) => {
-    if (err) return res.status(500).json({ message: 'Lỗi server' });
-    res.json({ totalUsers: results[0].total });
-  });
+router.get('/users/count', async (req, res) => {
+  try {
+    const [rows] = await db.promise().query('SELECT COUNT(*) AS total FROM users');
+    res.json({ totalUsers: rows[0].total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi server khi lấy tổng số người dùng' });
+  }
 });
+
+
 
 // 📦 Thống kê đơn hàng và doanh thu
 router.get('/orders/analytics', async (req, res) => {

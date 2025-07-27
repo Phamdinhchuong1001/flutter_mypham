@@ -20,5 +20,16 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 📦 Tổng số sản phẩm
+router.get('/count', async (req, res) => {
+  try {
+    const [rows] = await db.promise().query('SELECT COUNT(*) AS total FROM products');
+    res.json({ totalProducts: rows[0].total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Lỗi khi lấy tổng số sản phẩm' });
+  }
+});
+
 
 module.exports = router;

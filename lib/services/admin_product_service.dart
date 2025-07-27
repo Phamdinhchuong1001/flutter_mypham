@@ -8,13 +8,14 @@ class AdminProductService {
 Future<int> getTotalProductsCount() async {
   try {
     final response = await _dio.get('$_baseUrl/count');
-    final total = response.data['total'];
+    final total = response.data['totalProducts']; // ✅ sửa ở đây
     return total;
   } catch (e) {
     print('❌ [getTotalProductsCount] Lỗi lấy tổng sản phẩm: $e');
     return 0;
   }
 }
+
 
 
 
