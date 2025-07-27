@@ -1,4 +1,4 @@
-import 'cart_item.dart' as cart_item;
+import 'cart_item.dart';
 
 class OrderProduct {
   final int orderId;
@@ -6,7 +6,7 @@ class OrderProduct {
   final String nameCustomer;
   final String status;
   final double totalPrice;
-  final List<cart_item.CartItem> listCartItem;
+  final List<CartItemModel> listCartItem;
   final DateTime createdAt;
   final String address;
   final String payment;
@@ -37,10 +37,10 @@ class OrderProduct {
       status: json['status'] ?? '',
       totalPrice: (json['totalPrice'] ?? 0).toDouble(),
       listCartItem: (json['listCartItem'] as List<dynamic>?)
-              ?.map((item) => cart_item.CartItem.fromJson(item))
+              ?.map((item) => CartItemModel.fromJson(item))
               .toList() ??
           [],
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
       address: json['address'] ?? '',
       payment: json['payment'] ?? '',
       deliveryFee: (json['deliveryFee'] ?? 0).toDouble(),
@@ -56,7 +56,14 @@ class OrderProduct {
       'nameCustomer': nameCustomer,
       'status': status,
       'totalPrice': totalPrice,
-      'listCartItem': listCartItem.map((item) => item.toJson()).toList(),
+      'listCartItem': listCartItem.map((item) => {
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'price': item.price,
+            'images': item.images,
+            'quantity': item.quantity,
+          }).toList(),
       'createdAt': createdAt.toIso8601String(),
       'address': address,
       'payment': payment,

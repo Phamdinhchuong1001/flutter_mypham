@@ -1,14 +1,15 @@
 import 'package:flutter_appmypham/models/cart_item.dart';
+
 class Cart {
   final String cartId;
-  final List<CartItem> cartItem;
+  final List<CartItemModel> cartItems;
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   Cart({
     required this.cartId,
-    required this.cartItem,
+    required this.cartItems,
     required this.userId,
     required this.createdAt,
     required this.updatedAt,
@@ -17,8 +18,8 @@ class Cart {
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
       cartId: json['cartId'] ?? '',
-      cartItem: (json['cartItem'] as List<dynamic>?)
-              ?.map((item) => CartItem.fromJson(item))
+      cartItems: (json['cartItems'] as List<dynamic>?)
+              ?.map((item) => CartItemModel.fromJson(item))
               .toList() ??
           [],
       userId: json['userId'] ?? '',
@@ -30,7 +31,14 @@ class Cart {
   Map<String, dynamic> toJson() {
     return {
       'cartId': cartId,
-      'cartItem': cartItem.map((item) => item.toJson()).toList(),
+      'cartItems': cartItems.map((item) => {
+            'id': item.id,
+            'title': item.title,
+            'description': item.description,
+            'price': item.price,
+            'images': item.images,
+            'quantity': item.quantity,
+          }).toList(),
       'userId': userId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),

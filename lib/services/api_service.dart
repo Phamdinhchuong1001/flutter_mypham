@@ -3,9 +3,11 @@ import 'dart:io' show File;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
+import '../models/product.dart'; 
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:3000/api';
+  static const String baseUrl = 'http://192.168.88.63:3000/api';
+
 
   /// Đăng ký tài khoản
   static Future<String?> register(String name, String email, String password) async {
@@ -236,5 +238,21 @@ static Future<void> markNotificationsAsRead(int userId) async {
     await http.put(Uri.parse('$baseUrl/notifications/$userId/mark-as-read'));
   } catch (_) {}
 }
+  /// ✅ Lấy danh sách sản phẩm
+  static Future<List<Product>> fetchProducts() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/products'));
+      if (response.statusCode == 200) {
+        List jsonData = jsonDecode(response.body);
+        return jsonData.map((item) => Product.fromJson(item)).toList();
+      } else {
+        throw Exception('Không thể tải danh sách sản phẩm');
+      }
+    } catch (e) {
+      print('Lỗi khi fetchProducts: $e');
+      return [];
+    }
+  }
+
 
 }

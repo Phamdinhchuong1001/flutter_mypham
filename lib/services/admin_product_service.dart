@@ -3,7 +3,8 @@ import '../models/product.dart';
 
 class AdminProductService {
   final Dio _dio = Dio();
-  final String _baseUrl = 'http://172.20.10.5:3000/api/products';
+  final String _baseUrl = 'http://192.168.88.63:3000/api/products';
+
 
 Future<int> getTotalProductsCount() async {
   try {

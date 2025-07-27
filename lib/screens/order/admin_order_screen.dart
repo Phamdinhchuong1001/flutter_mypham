@@ -309,15 +309,15 @@ class _AdminOrderScreenState extends State<AdminOrderScreen> {
     );
   }
 
-  Widget _buildOrderItem(cart_item.CartItem item) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(item.productId, style: TextStyle(color: mainColor)),
-        Text('${item.quantity} x ${Utils.formatCurrency(item.unitPrice)}', style: TextStyle(color: accentColor)),
-      ],
-    );
-  }
+  Widget _buildOrderItem(cart_item.CartItemModel item) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(item.title, style: TextStyle(color: mainColor)),
+      Text('${item.quantity} x ${Utils.formatCurrency(item.price)}', style: TextStyle(color: accentColor)),
+    ],
+  );
+}
 
   Widget _buildStatusUpdate(OrderProduct order) {
     final Map<String, Color> statusColors = {
