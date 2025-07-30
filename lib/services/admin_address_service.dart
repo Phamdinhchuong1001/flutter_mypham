@@ -1,9 +1,21 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import '../models/address.dart';
 
 class AddressService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  // ✅ Đổi baseUrl theo nền tảng (web, android emulator, thiết bị thật)
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000/api';
+    } else if (Platform.isAndroid) {
+      // ⚠️ Sử dụng IP thật của máy bạn tại đây
+      return 'http://172.20.10.5:3000/api';
+    } else {
+      return 'http://localhost:3000/api';
+    }
+  }
 
   // Lấy danh sách địa chỉ
   Future<List<Address>> getAddresses() async {

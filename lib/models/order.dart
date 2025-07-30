@@ -29,25 +29,27 @@ class OrderProduct {
     required this.note,
   });
 
-  factory OrderProduct.fromJson(Map<String, dynamic> json) {
-    return OrderProduct(
-      orderId: json['orderId'] ?? 0,
-      userId: json['userId'] ?? 0,
-      nameCustomer: json['nameCustomer'] ?? '',
-      status: json['status'] ?? '',
-      totalPrice: (json['totalPrice'] ?? 0).toDouble(),
-      listCartItem: (json['listCartItem'] as List<dynamic>?)
-              ?.map((item) => CartItemModel.fromJson(item))
-              .toList() ??
-          [],
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      address: json['address'] ?? '',
-      payment: json['payment'] ?? '',
-      deliveryFee: (json['deliveryFee'] ?? 0).toDouble(),
-      orderDiscount: (json['orderDiscount'] ?? 0).toDouble(),
-      note: json['note'] ?? '',
-    );
-  }
+factory OrderProduct.fromJson(Map<String, dynamic> json) {
+  return OrderProduct(
+    orderId: json['orderId'] ?? 0,
+    userId: json['userId'] ?? 0,
+    nameCustomer: json['nameCustomer'] ?? '',
+    status: json['status'] ?? '',
+    totalPrice: (json['totalPrice'] ?? 0).toDouble(),
+    listCartItem: (json['listCartItem'] as List<dynamic>?)
+            ?.map((item) => CartItemModel.fromJson(item))
+            .toList() ?? [],
+    createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+    address: json['address'] ?? '',
+    payment: json['payment'] ?? '',
+    deliveryFee: (json['deliveryFee'] ?? 0).toDouble(),
+    orderDiscount: (json['orderDiscount'] ?? 0).toDouble(),
+    note: json['note'] ?? '',
+  );
+}
+
+
+
 
   Map<String, dynamic> toJson() {
     return {

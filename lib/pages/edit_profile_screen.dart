@@ -92,13 +92,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isNetworkAvatar = avatar.startsWith('http') || avatar.startsWith('/uploads');
-    final imageProvider = isNetworkAvatar
-        ? NetworkImage(
-            avatar.startsWith('/')
-                ? 'http://127.0.0.1:3000$avatar'
-                : avatar,
-          )
-        : const AssetImage("assets/images/profile.jpg");
+final imageProvider = isNetworkAvatar
+    ? NetworkImage(
+        avatar.startsWith('/')
+            ? 'http://172.20.10.5:3000$avatar' // ✅ Đổi IP ở đây
+            : avatar,
+      )
+    : const AssetImage("assets/images/profile.jpg");
+
 
     return Scaffold(
       backgroundColor: Colors.white,

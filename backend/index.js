@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 // 📦 Kết nối MySQL
 const db = require('./db'); // File db.js kết nối database
 const adminRoutes = require('./routes/admin'); // Các route admin khác (nếu có)
-
+const orderRoutes = require('./routes/orderRoutes');
 // 📂 Cho phép truy cập ảnh
 app.use('/uploads', express.static('uploads'));
 
@@ -337,6 +337,7 @@ app.get('/api/products/count', (req, res) => {
 
 /* ------------------------- 🔗 ROUTER ADMIN & SERVER ------------------------- */
 
+app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.listen(3000, '0.0.0.0', () => {
   console.log('🚀 Server đang chạy tại http://0.0.0.0:3000');

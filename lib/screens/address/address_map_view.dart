@@ -58,10 +58,11 @@ class AddressMapView extends StatelessWidget {
                     initialZoom: 12.0,
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.app', // cần thiết với flutter_map v5
-                    ),
+                 TileLayer(
+  urlTemplate: 'https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=F7ML0MxKSSJdM1RmoCcs',
+  userAgentPackageName: 'com.example.app',
+),
+
                     MarkerLayer(
                       markers: addresses.map((address) {
                         return Marker(

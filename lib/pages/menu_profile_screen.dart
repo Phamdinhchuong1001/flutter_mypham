@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_appmypham/pages/order_list_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_appmypham/pages/login_page.dart';
 import 'package:flutter_appmypham/pages/profile_screen.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_appmypham/pages/edit_profile_screen.dart';
 import 'package:flutter_appmypham/pages/favorite_screen.dart';
 import 'package:flutter_appmypham/services/api_service.dart';
 import 'package:flutter_appmypham/services/user_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MenuProfileScreen extends StatefulWidget {
   const MenuProfileScreen({super.key});
@@ -147,9 +149,16 @@ class _MenuProfileScreenState extends State<MenuProfileScreen> {
             ),
 
             CustomProfileMenu(
-              text: "Help Center",
-              iconData: Icons.help_outline,
-              press: () {},
+              text: "Danh sách đơn hàng",
+              iconData: Icons.list_alt,
+              press: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OrderListScreen(userId: userId),
+                  ),
+                );
+              },
             ),
 
             CustomProfileMenu(
@@ -184,7 +193,7 @@ class ProfilePic extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('/uploads');
     final imageWidget = isNetworkImage
-        ? NetworkImage(imageUrl.startsWith('/') ? 'http://127.0.0.1:3000$imageUrl' : imageUrl)
+        ? NetworkImage(imageUrl.startsWith('/') ? 'http://172.20.10.5:3000$imageUrl' : imageUrl)
         : const AssetImage('assets/images/profile.jpg') as ImageProvider;
 
     return SizedBox(

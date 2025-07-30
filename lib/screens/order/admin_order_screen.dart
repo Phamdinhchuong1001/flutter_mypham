@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
-
 import '../../models/order.dart';
 import '../../models/user_info.dart';
 import '../../models/cart_item.dart' as cart_item;
@@ -349,20 +348,30 @@ class _AdminOrderScreenState extends State<AdminOrderScreen> {
               ]),
               SizedBox(height: 12),
               Row(children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: order.status,
-                    onChanged: (status) {
-                      if (status != null) {
-                        _adminOrderService.updateOrderStatus(order.orderId.toString(), status).then((_) => setState(() {}));
-                      }
-                    },
-                    decoration: InputDecoration(labelText: 'Cập nhật trạng thái', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
-                    items: statuses.map((s) {
-                      return DropdownMenuItem(value: s, child: Text(_adminOrderService.getStatusText(s)));
-                    }).toList(),
-                  ),
-                ),
+Expanded(
+  child: DropdownButtonFormField<String>(
+    value: statuses.contains(order.status) ? order.status : null,
+    onChanged: (status) {
+      if (status != null) {
+        _adminOrderService
+            .updateOrderStatus(order.orderId.toString(), status)
+            .then((_) => setState(() {}));
+      }
+    },
+    decoration: InputDecoration(
+      labelText: 'Cập nhật trạng thái',
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    ),
+    items: statuses
+        .toSet() // đảm bảo không bị trùng giá trị
+        .map((s) => DropdownMenuItem<String>(
+              value: s,
+              child: Text(_adminOrderService.getStatusText(s)),
+            ))
+        .toList(),
+  ),
+),
+
                 SizedBox(width: 12),
                 ElevatedButton(
                   onPressed: () => _showCancelOrderDialog(order),

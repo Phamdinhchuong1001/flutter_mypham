@@ -4,6 +4,7 @@ class Product {
   final String description;
   final double price;
   final String image;
+  int quantity; // ✅ thêm field quantity
 
   Product({
     this.id,
@@ -11,6 +12,7 @@ class Product {
     required this.description,
     required this.price,
     required this.image,
+    this.quantity = 1, // ✅ mặc định là 1 khi thêm vào giỏ hàng
   });
 
   Map<String, dynamic> toJson() {
@@ -20,6 +22,7 @@ class Product {
       'description': description,
       'price': price,
       'image': image,
+      'quantity': quantity, // ✅ đưa quantity vào JSON nếu cần
     };
   }
 
@@ -30,6 +33,7 @@ class Product {
       description: json['description'],
       price: double.parse(json['price'].toString()),
       image: json['image'],
+      quantity: json['quantity'] ?? 1, // ✅ đọc quantity nếu có
     );
   }
 }

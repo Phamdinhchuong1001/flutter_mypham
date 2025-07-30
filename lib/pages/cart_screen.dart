@@ -2,9 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
+import '../services/user_storage.dart';
+import 'payment_page.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final user = await UserStorage.getUserData();
+    if (user != null && user['id'] != null) {
+      setState(() {
+        userId = user['id'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,18 +52,43 @@ class CartScreen extends StatelessWidget {
                     itemCount: cartItems.length,
                     itemBuilder: (context, index) {
                       final item = cartItems[index];
-                      return ListTile(
-                        leading: Image.network(item.image, width: 60, height: 60),
-                        title: Text(item.name),
-                        subtitle: Text(
-                          "${item.price.toStringAsFixed(0)}đ",
-                          style: const TextStyle(color: Colors.orange),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            cartProvider.removeFromCart(item);
-                          },
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ListTile(
+                          leading: Image.network(item.image, width: 60, height: 60, fit: BoxFit.cover),
+                          title: Text(item.name),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${item.price.toStringAsFixed(0)}đ",
+                                style: const TextStyle(color: Colors.orange),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.remove_circle_outline),
+                                    onPressed: () {
+                                      cartProvider.decreaseQuantity(item);
+                                    },
+                                  ),
+                                  Text(item.quantity.toString()),
+                                  IconButton(
+                                    icon: const Icon(Icons.add_circle_outline),
+                                    onPressed: () {
+                                      cartProvider.increaseQuantity(item);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              cartProvider.removeFromCart(item);
+                            },
+                          ),
                         ),
                       );
                     },
@@ -65,7 +114,23 @@ class CartScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
-                          // TODO: Xử lý thanh toán
+                          if (userId == 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Vui lòng đăng nhập lại")),
+                            );
+                            return;
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentPage(
+                                userId: userId,
+                                cartItems: List<Product>.from(cartItems),
+                                totalPrice: cartProvider.totalPrice,
+                              ),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange,

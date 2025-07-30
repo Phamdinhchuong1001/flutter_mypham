@@ -1,4 +1,3 @@
-// admin_dashboard.dart
 import 'package:flutter_appmypham/auth/login_or_register.dart';
 import 'package:flutter_appmypham/models/order.dart';
 import 'package:flutter_appmypham/screens/address/admin_address_screen.dart';
@@ -51,22 +50,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
     try {
       final userCount = await _userService.getTotalUsersCount();
       final productCount = await _productService.getTotalProductsCount();
-      final orderAnalytics = await _orderService.getOrderAnalytics();
+      final fetchedTotalOrders = await _orderService.getTotalOrders();        
+      final fetchedTotalRevenue = await _orderService.getTotalRevenue();     
       final recentOrdersData = await _orderService.getRecentOrders();
 
       setState(() {
         totalUsers = userCount;
         totalProducts = productCount;
-        totalOrders = orderAnalytics['totalOrders'] ?? 0;
-        totalRevenue = orderAnalytics['totalRevenue'] ?? 0.0;
+        totalOrders = fetchedTotalOrders;
+        totalRevenue = fetchedTotalRevenue;
         recentOrders = recentOrdersData;
       });
     } catch (e) {
       print('Lỗi khi tải dữ liệu bảng điều khiển: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(content: Text('Không thể tải dữ liệu: $e')),
+        SnackBar(content: Text('Không thể tải dữ liệu: $e')),
       );
-
     }
   }
 
@@ -80,45 +79,50 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isLargeScreen = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: _buildAppBar(),
-      body: Row(
-        children: [
-          if (MediaQuery.of(context).size.width > 600) _buildSidebar(),
-          if (MediaQuery.of(context).size.width <= 600)
-            Drawer(child: _buildSidebar()),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildQuickStatsRow(),
-                    const SizedBox(height: 20),
-                    MediaQuery.of(context).size.width > 1000
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: _buildTopProductsChart()),
-                              const SizedBox(width: 20),
-                              Expanded(child: _buildRecentOrdersList()),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              _buildTopProductsChart(),
-                              const SizedBox(height: 20),
-                              _buildRecentOrdersList(),
-                            ],
-                          ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+      drawer: isLargeScreen ? null : Drawer(child: _buildSidebar()),
+      body: isLargeScreen
+          ? Row(
+              children: [
+                _buildSidebar(),
+                Expanded(child: _buildMainContent()),
+              ],
+            )
+          : _buildMainContent(),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildQuickStatsRow(),
+            const SizedBox(height: 20),
+            MediaQuery.of(context).size.width > 1000
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildTopProductsChart()),
+                      const SizedBox(width: 20),
+                      Expanded(child: _buildRecentOrdersList()),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      _buildTopProductsChart(),
+                      const SizedBox(height: 20),
+                      _buildRecentOrdersList(),
+                    ],
+                  ),
+          ],
+        ),
       ),
     );
   }
@@ -154,40 +158,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildQuickStatsRow() {
-    return Wrap(
-      spacing: 16.0,
-      runSpacing: 16.0,
-      children: [
-        _buildStatCard(
-          title: 'Tổng Người Dùng',
-          value: totalUsers.toString(),
-          icon: Icons.people,
-          color: mainColor,
-        ),
-        _buildStatCard(
-          title: 'Tổng Đơn Hàng',
-          value: totalOrders.toString(),
-          icon: Icons.shopping_bag,
-          color: accentColor,
-        ),
-        _buildStatCard(
-          title: 'Tổng Sản Phẩm',
-          value: totalProducts.toString(),
-          icon: Icons.shopping_cart,
-          color: lightColor,
-        ),
-        _buildStatCard(
-          title: 'Tổng Doanh Thu',
-          value: NumberFormat.currency(locale: 'vi_VN', symbol: '₫')
-              .format(totalRevenue),
-          icon: Icons.monetization_on,
-          color: Colors.green.shade700,
-        ),
-      ],
-    );
-  }
-
   Widget _buildSidebar() {
     return Container(
       width: 280,
@@ -199,27 +169,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: ListView(
               padding: EdgeInsets.symmetric(vertical: 12),
               children: [
-                // _buildNavItem(Icons.dashboard_rounded, 'Bảng Điều Khiển', true, () {}),
                 _buildNavItem(Icons.people_alt_rounded, 'Người Dùng', false, () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AdminUserScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminUserScreen()));
                 }),
                 _buildNavItem(Icons.shopping_cart_rounded, 'Đơn Hàng', false, () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AdminOrderScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminOrderScreen()));
                 }),
                 _buildNavItem(Icons.spa_rounded, 'Sản Phẩm', false, () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AdminProductScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AdminProductScreen()));
                 }),
                 _buildNavItem(Icons.location_on_rounded, 'Địa Chỉ', false, () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddressManagementScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AddressManagementScreen()));
                 }),
-                
                 _buildNavItem(Icons.notifications_rounded, 'Thông Báo', false, () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => UserNotificationManager()));
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => UserNotificationManager()));
                 }),
               ],
             ),
@@ -252,33 +215,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 )
               ],
             ),
-            child: Icon(
-              Icons.admin_panel_settings,
-              color: mainColor,
-              size: 36,
-            ),
+            child: Icon(Icons.admin_panel_settings, color: mainColor, size: 36),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  email,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 14,
-                  ),
-                ),
+                Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+                SizedBox(height: 4),
+                Text(email, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14)),
               ],
             ),
           ),
@@ -286,8 +232,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-
-
 
   Widget _buildNavItem(IconData icon, String title, bool isActive, VoidCallback onTap) {
     return Container(
@@ -308,11 +252,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: isActive ? Colors.white : mainColor,
-                  size: 22,
-                ),
+                Icon(icon, color: isActive ? Colors.white : mainColor, size: 22),
                 SizedBox(width: 12),
                 Text(
                   title,
@@ -330,6 +270,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  Widget _buildQuickStatsRow() {
+    return Wrap(
+      spacing: 16.0,
+      runSpacing: 16.0,
+      children: [
+        _buildStatCard(
+          title: 'Tổng Người Dùng',
+          value: totalUsers.toString(),
+          icon: Icons.people,
+          color: mainColor,
+        ),
+        _buildStatCard(
+          title: 'Tổng Đơn Hàng',
+          value: totalOrders.toString(),
+          icon: Icons.shopping_bag,
+          color: accentColor,
+        ),
+        _buildStatCard(
+          title: 'Tổng Sản Phẩm',
+          value: totalProducts.toString(),
+          icon: Icons.shopping_cart,
+          color: lightColor,
+        ),
+        _buildStatCard(
+          title: 'Tổng Doanh Thu',
+          value: totalRevenue.toString(),
+          icon: Icons.monetization_on,
+          color: Colors.green.shade700,
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -337,22 +310,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required Color color,
   }) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width > 1200
-          ? (MediaQuery.of(context).size.width - 340) / 3 - 16
-          : MediaQuery.of(context).size.width > 800
-          ? (MediaQuery.of(context).size.width - 340) / 2 - 16
-          : MediaQuery.of(context).size.width - 340 - 16,
+      width: 280,
       child: Card(
         elevation: 4,
         shadowColor: color.withOpacity(0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         child: Container(
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(18),
-          ),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(18)),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
@@ -366,39 +330,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Icon(icon, color: Colors.white, size: 36),
                 ),
                 SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          title == 'Tổng Doanh Thu'
-                              ? Utils.formatCurrency(
-                              double.parse(value.replaceAll(RegExp(r'[^\d.]'), '')))
-                              : value,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+             Expanded(
+child: Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
+    SizedBox(height: 8),
+    FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title == 'Tổng Doanh Thu'
+            ? Utils.formatCurrency(
+                double.tryParse(value.replaceAll('.', '').replaceAll(',', '')) ?? 0)
+            : value,
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+    ),
+  ],
+),
+
+)
+
               ],
             ),
           ),
@@ -413,23 +366,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Container(
         padding: const EdgeInsets.all(20.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Sản Phẩm Bán Chạy Nhất',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: mainColor,
-                  ),
-                ),
+                Text('Sản Phẩm Bán Chạy Nhất', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: mainColor)),
                 Icon(Icons.trending_up, color: mainColor),
               ],
             ),
@@ -438,60 +381,34 @@ class _AdminDashboardState extends State<AdminDashboard> {
               height: 300,
               child: BarChart(
                 BarChartData(
-                  barGroups: topProducts.map((product) {
-                    final index = topProducts.indexOf(product);
-                    // Create colors based on index
-                    final colors = [
-                      mainColor,        // Deep blue
-                      accentColor,      // Medium blue
-                      lightColor,       // Light blue
-                      Color(0xFF4A6F8A), // Another blue variant
-                    ];
-                    final colorIndex = index % colors.length;
-
+                  barGroups: topProducts.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final product = entry.value;
+                    final colors = [mainColor, accentColor, lightColor, Color(0xFF4A6F8A)];
                     return BarChartGroupData(
                       x: index,
                       barRods: [
                         BarChartRodData(
                           toY: (product['salesCount'] ?? 0).toDouble(),
-                          color: colors[colorIndex],
+                          color: colors[index % colors.length],
                           width: 22,
                           borderRadius: BorderRadius.circular(8),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
-                            toY: topProducts
-                                .map((p) => (p['salesCount'] ?? 0).toDouble())
-                                .reduce((a, b) => a > b ? a : b) * 1.1,
+                            toY: topProducts.map((p) => (p['salesCount'] ?? 0).toDouble()).reduce((a, b) => a > b ? a : b) * 1.1,
                             color: Colors.grey.shade200,
                           ),
                         ),
                       ],
                     );
                   }).toList(),
-                  gridData: FlGridData(
-                    show: true,
-                    drawHorizontalLine: true,
-                    horizontalInterval: 5,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: Colors.grey.shade200,
-                      strokeWidth: 1,
-                    ),
-                  ),
+                  gridData: FlGridData(show: true, drawHorizontalLine: true, horizontalInterval: 5),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 40,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          );
-                        },
+                        getTitlesWidget: (value, meta) => Text(value.toInt().toString(), style: TextStyle(color: Colors.grey.shade600)),
                       ),
                     ),
                     bottomTitles: AxisTitles(
@@ -506,14 +423,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                               child: SizedBox(
                                 width: 60,
                                 child: Text(
-                                  index < topProducts.length
-                                      ? topProducts[index]['productName']
-                                      : '',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: mainColor,
-                                  ),
+                                  index < topProducts.length ? topProducts[index]['productName'] : '',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: mainColor),
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
                                 ),
@@ -538,11 +449,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           children: [
                             TextSpan(
                               text: 'Đã bán: ${product['salesCount']}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                           ],
                         );
@@ -561,39 +468,24 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildRecentOrdersList() {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Container(
         padding: const EdgeInsets.all(20.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Đơn Hàng Gần Đây',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: mainColor,
-                  ),
-                ),
+                Text('Đơn Hàng Gần Đây', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: mainColor)),
                 TextButton.icon(
                   icon: Icon(Icons.visibility, size: 18),
                   label: Text('Xem tất cả'),
                   onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => AdminOrderScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => AdminOrderScreen()));
                   },
-                  style: TextButton.styleFrom(
-                    foregroundColor: mainColor,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: mainColor),
                 ),
               ],
             ),
@@ -606,10 +498,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     children: [
                       Icon(Icons.receipt_long, size: 48, color: Colors.grey[400]),
                       SizedBox(height: 16),
-                      Text(
-                        'Chưa có đơn hàng nào',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
+                      Text('Chưa có đơn hàng nào', style: TextStyle(color: Colors.grey[600])),
                     ],
                   ),
                 ),
@@ -623,96 +512,91 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildOrderCard(OrderProduct order) {
-    final statusColors = {
-      'pending': mainColor,           // Deep blue
-      'processing': accentColor,      // Medium blue
-      'completed': lightColor,        // Light blue
-      'cancelled': Color(0xFF4A6F8A), // Another blue variant
-    };
-    final status = _orderService.getStatusText(order.status);
-    final statusColor = statusColors[status] ?? Colors.grey;
+  final status = _orderService.getStatusText(order.status);
+  final statusColor = {
+    'Chờ xử lý': Colors.orange,
+    'Đã xác nhận': Colors.blue,
+    'Đang giao': Colors.indigo,
+    'Đã giao': Colors.green,
+    'Đã huỷ': Colors.red,
+    'Không xác định': Colors.grey,
+  }[status] ?? Colors.grey;
 
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: ultraLightColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Icon(Icons.shopping_bag_outlined, color: mainColor),
-              ),
+  return Card(
+    elevation: 2,
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
             ),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Đơn Hàng #${order.orderId}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: mainColor,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Khách hàng: ${order.nameCustomer ?? 'Không có tên'}',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: const Icon(Icons.shopping_bag_outlined, color: Colors.black54),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  Utils.formatCurrency(order.totalPrice),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: mainColor,
-                    fontSize: 16,
-                  ),
+                  'Đơn hàng #${order.orderId}',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  DateFormat('dd/MM/yyyy').format(
-                      order.createdAt),
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  'Khách hàng: ${order.nameCustomer ?? 'Không có tên'}',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  DateFormat('dd/MM/yyyy').format(order.createdAt),
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
               ],
             ),
-            SizedBox(width: 12),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: statusColor, width: 1),
-              ),
-              child: Text(
-                status.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 10,
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                Utils.formatCurrency(order.totalPrice),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.green,
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor),
+                ),
+                child: Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

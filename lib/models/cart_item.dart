@@ -3,7 +3,7 @@ class CartItemModel {
   final String title;
   final String description;
   final double price;
-  final List<String> images;
+  final String images; // 🟡 đổi từ List<String> → String
   final int quantity;
 
   CartItemModel({
@@ -21,7 +21,7 @@ class CartItemModel {
       title: json['title'],
       description: json['description'],
       price: double.parse(json['price'].toString()),
-      images: List<String>.from(json['images']),
+      images: json['images'], // 🟢 không cần List.from nữa
       quantity: int.parse(json['quantity'].toString()),
     );
   }

@@ -6,7 +6,8 @@ import 'package:universal_html/html.dart' as html;
 import '../models/product.dart'; 
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.88.63:3000/api';
+  static const String baseUrl = 'http://172.20.10.5:3000/api';
+
 
 
   /// Đăng ký tài khoản

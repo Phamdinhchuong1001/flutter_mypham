@@ -27,7 +27,6 @@ dependencies:
   lottie: ^3.1.0
   fl_chart: ^0.66.2
   cached_network_image: ^3.3.1
-  image_picker_web: ^4.0.0
 
 dev_dependencies:
   flutter_test:

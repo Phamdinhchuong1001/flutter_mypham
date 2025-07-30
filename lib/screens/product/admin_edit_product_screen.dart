@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker_web/image_picker_web.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/product.dart';
 import '../../services/admin_product_service.dart';
@@ -43,17 +43,18 @@ class _AdminEditProductScreenState extends State<AdminEditProductScreen> {
     _imageUrl = widget.product.image;
   }
 
-Future<void> _pickImage() async {
-  final imageBytes = await ImagePickerWeb.getImageAsBytes();
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-  if (imageBytes != null) {
-    setState(() {
-      _selectedImageBytes = imageBytes;
-      _selectedImageName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    });
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageName = pickedFile.name;
+      });
+    }
   }
-}
-
 
   Future<void> _updateProduct() async {
     if (!_formKey.currentState!.validate()) return;
@@ -126,7 +127,6 @@ Future<void> _pickImage() async {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tên
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -137,8 +137,6 @@ Future<void> _pickImage() async {
                     value == null || value.isEmpty ? 'Vui lòng nhập tên sản phẩm' : null,
               ),
               const SizedBox(height: 16),
-
-              // Giá
               TextFormField(
                 controller: _priceController,
                 keyboardType: TextInputType.number,
@@ -151,8 +149,6 @@ Future<void> _pickImage() async {
                     value == null || value.isEmpty ? 'Vui lòng nhập giá' : null,
               ),
               const SizedBox(height: 16),
-
-              // Mô tả
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -162,8 +158,6 @@ Future<void> _pickImage() async {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-
-              // Ảnh
               Center(
                 child: Column(
                   children: [
@@ -180,10 +174,7 @@ Future<void> _pickImage() async {
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Nút lưu
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

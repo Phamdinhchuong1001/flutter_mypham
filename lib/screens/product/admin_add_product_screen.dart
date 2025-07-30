@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart'; // ✅ Thêm mới
 import '../../models/product.dart';
 import '../../services/admin_product_service.dart';
 import '../../services/cloudinary_service.dart';
-import 'package:image_picker_web/image_picker_web.dart';
 
 class AdminAddProductScreen extends StatefulWidget {
   const AdminAddProductScreen({Key? key}) : super(key: key);
@@ -14,7 +14,6 @@ class AdminAddProductScreen extends StatefulWidget {
 }
 
 class _AdminAddProductScreenState extends State<AdminAddProductScreen> {
-  // 🎨 Màu sắc
   final Color mainColor = Color(0xFF162F4A);
   final Color accentColor = Color(0xFF3A5F82);
   final Color lightColor = Color(0xFF718EA4);
@@ -25,6 +24,7 @@ class _AdminAddProductScreenState extends State<AdminAddProductScreen> {
   final CloudinaryService _cloudinaryService = CloudinaryService();
 
   Uint8List? _imageFile;
+  final ImagePicker _picker = ImagePicker(); // ✅
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -34,8 +34,9 @@ class _AdminAddProductScreenState extends State<AdminAddProductScreen> {
 
   Future<void> _pickImage() async {
     try {
-      Uint8List? imageBytes = await ImagePickerWeb.getImageAsBytes();
-      if (imageBytes != null) {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final imageBytes = await pickedFile.readAsBytes();
         setState(() {
           _imageFile = imageBytes;
         });
@@ -211,7 +212,7 @@ class _AdminAddProductScreenState extends State<AdminAddProductScreen> {
                             ),
                             SizedBox(height: 24),
 
-                            // Tên
+                            // Tên sản phẩm
                             TextFormField(
                               controller: _nameController,
                               decoration: _buildInputDecoration('Tên Sản Phẩm'),
@@ -248,7 +249,7 @@ class _AdminAddProductScreenState extends State<AdminAddProductScreen> {
                     ),
                     SizedBox(height: 24),
 
-                    // Nút
+                    // Nút thêm sản phẩm
                     ElevatedButton(
                       onPressed: _isUploading ? null : _saveProduct,
                       style: ElevatedButton.styleFrom(

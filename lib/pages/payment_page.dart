@@ -1,194 +1,170 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_appmypham/pages/Payment_Successful_Page.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import 'payment_successful_page.dart';
 
-class CartPage extends StatelessWidget {
-  final int userId; // ✅ Nhận userId từ ngoài truyền vào
+class PaymentPage extends StatelessWidget {
+  final int userId;
+  final double totalPrice;
+  final List<Product> cartItems;
 
-  const CartPage({super.key, required this.userId});
+  const PaymentPage({
+    super.key,
+    required this.userId,
+    required this.totalPrice,
+    required this.cartItems,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context);
+
+    int totalQuantity = cartItems.fold(0, (sum, item) => sum + item.quantity);
+    double sumTotal = cartItems.fold(0, (sum, item) => sum + item.price * item.quantity);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         title: const Text("Thanh Toán"),
-        leading: const BackButton(),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const Expanded(child: CartItemList()), // ✅ Đã đổi tên đúng class
-            const CouponField(),
-            const SummarySection(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PaymentSuccessfulPage(userId: userId),
+            Expanded(
+              child: ListView.builder(
+                itemCount: cartItems.length,
+                padding: const EdgeInsets.all(16),
+                itemBuilder: (context, index) {
+                  final item = cartItems[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundImage: NetworkImage(item.image),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle_outline),
+                                      onPressed: () {
+                                        cartProvider.decreaseQuantity(item);
+                                      },
+                                    ),
+                                    Text(item.quantity.toString()),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle_outline),
+                                      onPressed: () {
+                                        cartProvider.increaseQuantity(item);
+                                      },
+                                    ),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ),
+                          Text("${(item.price * item.quantity).toStringAsFixed(0)}đ",
+                              style: const TextStyle(fontWeight: FontWeight.bold)),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            onPressed: () {
+                              cartProvider.removeFromCart(item);
+                            },
+                          )
+                        ],
                       ),
-                    );
-                  },
-                  child: const Text("Thanh Toán"),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ✅ Danh sách sản phẩm
-class CartItemList extends StatelessWidget {
-  const CartItemList();
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      ("Tẩy tế bào chết", "570 Ml", "assets/images/taytebaochet.jpg", "20.000đ"),
-      ("Kem thoa tay", "330 Ml", "assets/images/kemthoatay.jpg", "10.000đ"),
-      ("Xịt dưỡng tóc", "500 Ml", "assets/images/duongtoc.jpg", "12.000đ"),
-    ];
-
-    return ListView.builder(
-      itemCount: items.length,
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return CartItem(
-          name: item.$1,
-          description: item.$2,
-          imagePath: item.$3,
-          price: item.$4,
-        );
-      },
-    );
-  }
-}
-
-class CartItem extends StatelessWidget {
-  final String name;
-  final String description;
-  final String imagePath;
-  final String price;
-
-  const CartItem({
-    required this.name,
-    required this.description,
-    required this.imagePath,
-    required this.price,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.white,
-              backgroundImage: AssetImage(imagePath),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(description, style: const TextStyle(fontSize: 12)),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: () {},
+                  SummaryRow(label: "Total Item", value: "${cartItems.length}"),
+                  SummaryRow(label: "Số lượng", value: "$totalQuantity"),
+                  SummaryRow(label: "Thành tiền", value: "${sumTotal.toStringAsFixed(0)}đ"),
+                  const Divider(),
+                  SummaryRow(label: "Tổng hóa đơn", value: "${sumTotal.toStringAsFixed(0)}đ", isBold: true),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      const Text("1"),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () {},
-                      ),
-                    ],
-                  )
+                      onPressed: () async {
+                        final url = Uri.parse('http://172.20.10.5:3000/api/orders');
+
+                        final items = cartItems.map((item) => {
+                              'productId': item.id,
+                              'quantity': item.quantity,
+                              'price': item.price,
+                            }).toList();
+
+                        final body = {
+                          'userId': userId,
+                          'totalPrice': totalPrice,
+                          'items': items,
+                        };
+
+                        try {
+                          final response = await http.post(
+                            url,
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode(body),
+                          );
+
+                          if (response.statusCode == 201) {
+                            if (context.mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PaymentSuccessfulPage(userId: userId),
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('❌ Đặt hàng thất bại: ${response.body}')),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('❌ Lỗi kết nối máy chủ')),
+                          );
+                        }
+                      },
+                      child: const Text("Thanh Toán"),
+                    ),
+                  ),
                 ],
               ),
             ),
-            Text(price, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-            const Icon(Icons.delete_outline),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class CouponField extends StatelessWidget {
-  const CouponField();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          const Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Nhập Voucher",
-                border: OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text("Apply"),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class SummarySection extends StatelessWidget {
-  const SummarySection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          SummaryRow(label: "Total Item", value: "6"),
-          SummaryRow(label: "Số lượng", value: "3"),
-          SummaryRow(label: "Thành tiền", value: "42.000đ"),
-          SummaryRow(label: "Discount", value: "5.000đ"),
-          const Divider(),
-          SummaryRow(label: "Tổng hóa đơn", value: "37.000đ", isBold: true),
-        ],
       ),
     );
   }
@@ -200,6 +176,7 @@ class SummaryRow extends StatelessWidget {
   final bool isBold;
 
   const SummaryRow({
+    super.key,
     required this.label,
     required this.value,
     this.isBold = false,

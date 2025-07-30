@@ -140,42 +140,46 @@ class ProfilePic extends StatelessWidget {
   final bool isShowPhotoUpload;
   final VoidCallback? imageUploadBtnPress;
 
-  @override
-  Widget build(BuildContext context) {
-    final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('/uploads');
-    final imageWidget = isNetworkImage
-        ? NetworkImage(imageUrl.startsWith('/') ? 'http://127.0.0.1:3000$imageUrl' : imageUrl)
-        : AssetImage('assets/images/profile.jpg') as ImageProvider;
+@override
+Widget build(BuildContext context) {
+  final isNetworkImage = imageUrl.startsWith('http') || imageUrl.startsWith('/uploads');
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(vertical: 16.0),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
+  final imageWidget = isNetworkImage
+      ? NetworkImage(imageUrl.startsWith('/')
+          ? 'http://172.20.10.5:3000$imageUrl' // ✅ IP thật máy bạn
+          : imageUrl)
+      : AssetImage('assets/images/profile.jpg') as ImageProvider;
+
+  return Container(
+    padding: const EdgeInsets.all(16.0),
+    margin: const EdgeInsets.symmetric(vertical: 16.0),
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(
+        color: Theme.of(context).textTheme.bodyLarge!.color!.withOpacity(0.08),
+      ),
+    ),
+    child: Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundImage: imageWidget,
         ),
-      ),
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: imageWidget,
-          ),
-          if (isShowPhotoUpload)
-            InkWell(
-              onTap: imageUploadBtnPress,
-              child: CircleAvatar(
-                radius: 13,
-                backgroundColor: Theme.of(context).primaryColor,
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
-              ),
-            )
-        ],
-      ),
-    );
-  }
+        if (isShowPhotoUpload)
+          InkWell(
+            onTap: imageUploadBtnPress,
+            child: CircleAvatar(
+              radius: 13,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.add, color: Colors.white, size: 20),
+            ),
+          )
+      ],
+    ),
+  );
+}
+
 }
 
 class Info extends StatelessWidget {
